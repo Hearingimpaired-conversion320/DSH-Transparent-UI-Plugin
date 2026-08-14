@@ -59,7 +59,9 @@ if ($isRemote) {
         $inner = Get-ChildItem $extractDir -Directory | Select-Object -First 1
         if (-not $inner) { throw "zip contains no package directory: $zipUrl" }
         if (Test-Path $cloneDir) { Remove-Item $cloneDir -Recurse -Force }
-        New-Item -ItemType Directory -Force -Path $pluginsDir | Out-Null
+        # The plugin name is scoped (@deepseek-ai/...), so create the parent
+        # level too - Move-Item cannot create multi-level destination paths.
+        New-Item -ItemType Directory -Force -Path (Split-Path $cloneDir -Parent) | Out-Null
         Move-Item $inner.FullName $cloneDir
         Remove-Item $zipFile -Force
     }
@@ -74,6 +76,7 @@ if (-not (Test-Path (Join-Path $src 'lib\client.js'))) {
 # ---------- 2. junction ----------
 Write-Host "[2/3] Linking -> $linkPath" -ForegroundColor Cyan
 New-Item -ItemType Directory -Force -Path $nodeModules | Out-Null
+New-Item -ItemType Directory -Force -Path (Split-Path $linkPath -Parent) | Out-Null
 if (Test-Path $linkPath) {
     $item = Get-Item $linkPath -Force
     if ($item.LinkType) {
