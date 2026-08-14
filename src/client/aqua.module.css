@@ -27,10 +27,20 @@
 /* The header card floats ABOVE the transcript: the scroll body slides up
    behind the frosted glass (negative margin) and its padding starts content
    below the card, so scrolling text passes under the header and stays
-   visible through the blur instead of hard-clipping at the card edge. */
+   visible through the blur instead of hard-clipping at the card edge.
+   z-index 8 (not 6) keeps it above the markdown CodeBlock sticky banner,
+   which the stock UI stacks at z-index 6 — otherwise a code block's copy
+   button row slides OVER the header and drifts as it scrolls past. */
 [data-dsh-aqua] [data-phase='active'] header {
   position: relative;
-  z-index: 6;
+  z-index: 8;
+}
+
+/* The floating header breaks the code block banner's sticky anchoring, so
+   disable stickiness — the banner stays on its code block and scrolls with
+   it instead of sliding over the header and drifting. */
+[data-dsh-aqua] [class*='banner'] {
+  position: static;
 }
 
 [data-dsh-aqua] [data-phase='active'] [data-conversation-scroll] {
