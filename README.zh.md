@@ -12,32 +12,31 @@ Aqua 是一层套在 DeepSeek Harness 网页端外面的深海主题。它把整
 
 ![](assets/4.png)
 
-## 自包含
-
-Aqua 是**面向原版 DSH 的即装即用插件** —— 不要求改动 DSH 核心。样式表命中的目标要么原版 UI 已有（`data-composer-card`、`data-conversation-composer-overlay`、ARIA 角色、lightningcss 保留的类名子串），要么由插件的 `seam-stamper` **在运行时打上**（一个 MutationObserver，随 React 挂载给匹配元素补上 `data-dsh-*` / `data-hero-*` 锚点）。Space Grotesk 以 base64 `@font-face` **内嵌**进 bundle；中文显示文本刻意走系统衬线回退（宋体 / 华文宋体 / SimSun —— Noto Serif SC 是多 MB 的 unicode-range 字体，无法随插件分发）。开关标志是浏览器本地 `localStorage`，因此也不依赖 Host 设置命名空间。
-
 ## 安装
 
-面向原版 DSH 部署：
+不用 npm、不用账号、不用构建 —— 仓库自带预构建好的 `lib/`，一个脚本搞定。
 
-1. 把插件装进承载 Web 客户端的 profile：
+### Windows（一条命令）
 
-   ```sh
-   npm install @deepseek-ai/dsh-client-ui-aqua@^0.1.0
-   ```
+```powershell
+powershell -ExecutionPolicy Bypass -File install.ps1 https://github.com/WYH66666666/DSH-Transparent-UI-Plugin.git
+```
 
-2. 在 Web profile 的 `cordis.patch.yml` 里注册（放在其它 `dsh.client` 插件旁，例如 `ui-conversation` 之后）：
+脚本会克隆仓库、把插件链接进 profile 的 `node_modules`、并在 `cordis.patch.yml` 里登记 `ui-aqua`（幂等，重复跑不会重复登记）。刷新 Web 界面即可。
 
-   ```yaml
-   plugins:
-     dsh.client:
-       - insert:
-           - id: ui-aqua
-             name: '@deepseek-ai/dsh-client-ui-aqua'
-   ```
+### macOS / Linux（手动，三步）
 
-3. 刷新 Web 界面。Aqua **默认开启**；在 **设置 → 插件 → Aqua** 中开关。
+```sh
+git clone https://github.com/WYH66666666/DSH-Transparent-UI-Plugin.git
+ln -s "$PWD/DSH-Transparent-UI-Plugin" "$DSH_HOME/profiles/node_modules/@deepseek-ai/dsh-client-ui-aqua"
+```
 
-插件体（主题层、seam 打点器、设置卡片）全部位于 `./client` 导出 —— node 侧 `lib/index.js` 是为满足 Host Loader 契约而保留的空 `apply` 占位。
+然后往 `$DSH_HOME/profiles/web/cordis.patch.yml` 追加：
 
+```yaml
+- insert:
+    - id: ui-aqua
+      name: '@deepseek-ai/dsh-client-ui-aqua'
+```
 
+刷新 Web 界面。Aqua **默认开启**；在 **设置 → 插件 → Aqua** 中开关。

@@ -19,7 +19,7 @@ No npm, no account, no build — the repo ships a pre-built `lib/`, and one scri
 ### Windows (one command)
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File install.ps1 https://github.com/WYH66666666/DSH.git
+powershell -ExecutionPolicy Bypass -File install.ps1 https://github.com/WYH66666666/DSH-Transparent-UI-Plugin.git
 ```
 
 The script clones the repo, links it into the profile's `node_modules`, and registers `ui-aqua` in `cordis.patch.yml` (idempotent — safe to run again). Reload the web UI and it is on.
@@ -27,8 +27,8 @@ The script clones the repo, links it into the profile's `node_modules`, and regi
 ### macOS / Linux (manual, three steps)
 
 ```sh
-git clone https://github.com/WYH66666666/DSH.git
-ln -s "$PWD/DSH" "$DSH_HOME/profiles/node_modules/@deepseek-ai/dsh-client-ui-aqua"
+git clone https://github.com/WYH66666666/DSH-Transparent-UI-Plugin.git
+ln -s "$PWD/DSH-Transparent-UI-Plugin" "$DSH_HOME/profiles/node_modules/@deepseek-ai/dsh-client-ui-aqua"
 ```
 
 then append to `$DSH_HOME/profiles/web/cordis.patch.yml`:
