@@ -28,12 +28,19 @@ $plugin      = '@deepseek-ai/dsh-client-ui-aqua'
 $nodeModules = Join-Path $DshHome 'profiles\node_modules'
 $linkPath    = Join-Path $nodeModules $plugin
 $patchFile   = Join-Path $DshHome "profiles\$Profile\cordis.patch.yml"
+# Persistent clone location: %TEMP% can be wiped on reboot / disk cleanup,
+# which would leave the junction dangling and break the next boot.
+$pluginsDir  = Join-Path $DshHome 'plugins'
+$cloneDir    = Join-Path $pluginsDir $plugin
 
 # ---------- 1. source ----------
 Write-Host '[1/3] Getting plugin source...' -ForegroundColor Cyan
 if ($Source -match '^(https?://|git@|ssh://|github:)') {
-    $cloneDir = Join-Path $env:TEMP $plugin
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        throw 'git not found in PATH - install git or pass a local repo path instead'
+    }
     if (Test-Path $cloneDir) { Remove-Item $cloneDir -Recurse -Force }
+    New-Item -ItemType Directory -Force -Path $pluginsDir | Out-Null
     git clone $Source $cloneDir | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "git clone failed: $Source" }
     $src = $cloneDir
@@ -47,7 +54,15 @@ if (-not (Test-Path (Join-Path $src 'lib\client.js'))) {
 # ---------- 2. junction ----------
 Write-Host "[2/3] Linking -> $linkPath" -ForegroundColor Cyan
 New-Item -ItemType Directory -Force -Path $nodeModules | Out-Null
-if (Test-Path $linkPath) { Remove-Item $linkPath -Force -Recurse -ErrorAction SilentlyContinue }
+if (Test-Path $linkPath) {
+    $item = Get-Item $linkPath -Force
+    if ($item.LinkType) {
+        # Delete the junction itself, never its target (-Recurse would follow it).
+        [System.IO.Directory]::Delete($linkPath)
+    } else {
+        Remove-Item $linkPath -Force -Recurse
+    }
+}
 New-Item -ItemType Junction -Path $linkPath -Target $src | Out-Null
 if (-not (Test-Path $linkPath)) { throw 'junction creation failed' }
 
@@ -74,3 +89,4 @@ if (-not (Test-Path $patchFile)) {
 
 Write-Host ''
 Write-Host 'Done. Reload the Web UI (Aqua is on by default; Settings -> Plugins -> Aqua to toggle).' -ForegroundColor Green
+Write-Host 'If the plugin does not appear after reload, restart the dsh web process.' -ForegroundColor Yellow
