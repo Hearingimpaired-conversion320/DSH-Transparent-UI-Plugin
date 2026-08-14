@@ -51,6 +51,7 @@ if ($isRemote) {
         $zipUrl    = "$repoUrl/archive/refs/heads/main.zip"
         $zipFile   = Join-Path $pluginsDir 'aqua-plugin.zip'
         $extractDir = Join-Path $pluginsDir 'aqua-plugin-extract'
+        New-Item -ItemType Directory -Force -Path $pluginsDir | Out-Null
         Write-Host "  downloading $zipUrl"
         Invoke-WebRequest $zipUrl -OutFile $zipFile -UseBasicParsing
         if (Test-Path $extractDir) { Remove-Item $extractDir -Recurse -Force }
