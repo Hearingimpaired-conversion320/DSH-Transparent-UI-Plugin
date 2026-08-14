@@ -4,6 +4,14 @@ English | [中文](README.zh.md)
 
 Aqua is a deep-sea glassmorphism theme layered over the DeepSeek Harness web UI. The header, sidebar, composer, stats line, and trajectory view all become panes of frosted glass floating over a slowly moving water backdrop, with the occasional fish and bubble drifting past. Dark mode is a blue-black sea; light mode is a cool blue-white. Everything sits behind a single toggle — switch it off and the stock UI comes back exactly, with no source changes to DSH itself. Install it and look under Settings → Plugins.
 
+![](assets/屏幕截图 2026-08-14 222500.png)
+
+![](assets/屏幕截图 2026-08-14 222524.png)
+
+![](assets/屏幕截图 2026-08-14 222634.png)
+
+![](assets/屏幕截图 2026-08-14 222656.png)
+
 ## Self-contained
 
 Aqua is a **drop-in plugin for stock DSH** — it does not require any change to DSH core. Everything the stylesheet targets is either already in the stock UI (`data-composer-card`, `data-conversation-composer-overlay`, ARIA roles, lightningcss-preserved class-name substrings) or is **stamped at runtime** by the plugin's `seam-stamper` (a MutationObserver that adds the `data-dsh-*` / `data-hero-*` hooks to the matching elements as React mounts them). Space Grotesk is **embedded** in the bundle as a base64 `@font-face`; Chinese display text intentionally rides the system serif fallback (Songti / STSong / SimSun — Noto Serif SC is a multi-MB unicode-range face that cannot ship in a plugin). The enable flag is browser-local `localStorage`, so there is no Host settings-namespace dependency either.
