@@ -14,7 +14,6 @@ Aqua is a deep-sea glassmorphism theme layered over the DeepSeek Harness web UI.
 
 ## Installation
 
-No npm, no account, no build — the repo ships a pre-built `lib/`, and one script does the rest.
 
 ### Windows (one command)
 
