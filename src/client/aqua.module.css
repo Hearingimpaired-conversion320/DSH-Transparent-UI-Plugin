@@ -42,29 +42,10 @@
    darker) fluid — the fluid itself provides the ground, so no dark veil
    covers either phase. */
 
-/* Edge fade: the transcript dissolves into the water as it reaches the top
-   (under the header) and the bottom (under the composer). A mask on the
-   scrollport fades in viewport coordinates — it stays fixed while content
-   scrolls through it — and stops short of the fused composer card, so the
-   card + stats footer stay solid while only the text behind them melts.
-   (Both `-webkit-` and standard are written, matching the mask pattern the
-   composer card's dashed ring already uses.) */
-[data-dsh-aqua] [data-phase='active'] [data-conversation-scroll] {
-  -webkit-mask-image: linear-gradient(
-    180deg,
-    transparent 0,
-    black 48px,
-    black calc(100% - 16px),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    180deg,
-    transparent 0,
-    black 48px,
-    black calc(100% - 16px),
-    transparent 100%
-  );
-}
+/* NOTE: the scrollport must NOT carry a mask-image. A mask turns the scroll
+   container into a backdrop root for its sticky composer child, which breaks
+   the composer card's `backdrop-filter` (the "send bar won't blur what's
+   behind it" bug) — content scrolls behind it sharp instead of frosted. */
 
 /* Active phase: drop the composer seat's opaque bottom slab and its 36px
    fade band entirely — the base rule (`.root[data-phase='active']
