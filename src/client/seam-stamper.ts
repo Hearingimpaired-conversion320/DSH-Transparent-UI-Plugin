@@ -42,9 +42,6 @@ const SEAMS: readonly Seam[] = [
   { attribute: 'data-dsh-add', selector: '[data-composer-card] [class*="add"]' },
   // Session stats line under the composer (composer.dock slot).
   { attribute: 'data-dsh-stats', selector: '[data-slot="conversation.composer.dock"] [class*="root"]' },
-  // Hero headline / fish (empty-session signature).
-  { attribute: 'data-hero-headline', selector: '[class*="headlineText"]' },
-  { attribute: 'data-hero-fish', selector: '[class*="fishHitbox"]' },
 ]
 
 function stamp(seam: Seam): void {
@@ -64,8 +61,6 @@ function stampAll(): void {
 
 /**
  * Stamp the seams once, then keep them stamped as React remounts nodes.
- * Stamping runs synchronously so the greeting observer (registered after this)
- * always sees a stamped `[data-hero-headline]` in the same commit.
  * @returns a disposer that disconnects the observer.
  */
 export function startSeamStamper(): () => void {

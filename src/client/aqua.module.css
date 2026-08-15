@@ -523,57 +523,6 @@
   background: rgba(110, 155, 232, 0.35);
 }
 
-/* ---------- Hero signature: water-light greeting, drifting fish, halo. ---------- */
-[data-dsh-aqua] [data-hero-headline] {
-  font-size: 28px;
-  line-height: 36px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  /* Latin rides Space Grotesk; the Chinese greeting rides the Noto Serif
-     display face (system Songti/SimSun until the webfont lands). */
-  font-family: 'Space Grotesk Variable', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun',
-    'PingFang SC', 'Microsoft YaHei', serif;
-  background: linear-gradient(180deg, #13243e 0%, #2e5eb8 62%, #3f76d8 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
-
-[data-dsh-aqua] body[data-ds-dark-theme] [data-hero-headline] {
-  background: linear-gradient(180deg, #f4f8fd 0%, #a9c4ec 58%, #7ea4df 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-
-[data-dsh-aqua] [data-hero-fish] svg {
-  filter: drop-shadow(0 2px 14px rgba(97, 135, 216, 0.38));
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  [data-dsh-aqua] [data-hero-fish] svg {
-    animation: dsh-aqua-drift 5.5s var(--ds-ease-in-out) infinite;
-  }
-}
-
-/* Hover: the drift hands over to the stock swim. */
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  [data-dsh-aqua] [data-hero-fish]:hover svg {
-    animation: dsh-aqua-swim var(--ds-transition-duration-slow) var(--ds-ease-in-out);
-  }
-}
-
-@keyframes dsh-aqua-drift {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-2.5px) rotate(-2deg); }
-}
-
-@keyframes dsh-aqua-swim {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  35% { transform: translate(-1px, -1px) rotate(-5deg); }
-  70% { transform: translate(1px, 0) rotate(3deg); }
-}
-
 /* ---------- Display typography: the serif face marks headings and the
    session tree, so the page reads in two voices — serif headings over the
    sans body. Space Grotesk keeps Latin/digits in the same stack. ---------- */
@@ -643,7 +592,6 @@
   [data-dsh-aqua] [class*='userRow'],
   [data-dsh-aqua] [data-tool],
   [data-dsh-aqua] [role='dialog'],
-  [data-dsh-aqua] [data-hero-fish] svg,
   [data-dsh-aqua] [data-dsh-aqua-ambient],
   [data-dsh-aqua] [data-aqua-critter] {
     animation: none;
