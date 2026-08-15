@@ -9,6 +9,8 @@ import { defineStore, type EngineStoreHandle } from '@deepseek-ai/dsh-client-run
 export interface AquaRowState {
   /** Persisted layer enable flag. */
   enabled: boolean
+  /** Rendering mode: floating glass cards or stock layout with generic glass. */
+  mode: 'float' | 'compat'
   /** Glass blur radius, px. */
   blur: number
   /** Glass frost amount, 0-100. */
@@ -30,6 +32,7 @@ export interface AquaRowState {
 /** The full payload the layer pushes into the row store on every change. */
 export interface AquaSettingsPayload {
   enabled: boolean
+  mode: 'float' | 'compat'
   blur: number
   frost: number
   fluidHue: number
@@ -52,6 +55,7 @@ export function createAquaRowStore(): EngineStoreHandle<AquaRowState, AquaRowAct
   return defineStore({
     init: (): AquaRowState => ({
       enabled: true,
+      mode: 'float',
       blur: 2,
       frost: 20,
       fluidHue: 316,
@@ -65,6 +69,7 @@ export function createAquaRowStore(): EngineStoreHandle<AquaRowState, AquaRowAct
       sync: (d, next: AquaSettingsPayload, revision: number) => {
         if (revision <= d.revision) return
         d.enabled = next.enabled
+        d.mode = next.mode
         d.blur = next.blur
         d.frost = next.frost
         d.fluidHue = next.fluidHue

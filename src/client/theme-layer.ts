@@ -158,6 +158,39 @@ export const AQUA_TOKEN_OVERRIDES: ThemeTokenOverrides = {
   },
 }
 
+/**
+ * Compatibility-mode token set: the same palette as the floating mode, but
+ * every surface token turns translucent, so the fluid/wallpaper backdrop
+ * shows through the STOCK layout. This is what makes the material generic —
+ * any plugin that consumes the shared design tokens gets the glass for free.
+ */
+const COMPAT_SURFACE_OVERRIDES: ThemeTokenOverrides = {
+  '--dsw-alias-bg-layer-1': { light: 'rgba(255, 255, 255, 0.55)', dark: 'rgba(17, 26, 39, 0.55)' },
+  '--dsw-alias-bg-layer-2': { light: 'rgba(236, 242, 250, 0.5)', dark: 'rgba(22, 33, 48, 0.55)' },
+  '--dsw-alias-bg-layer-3': { light: 'rgba(226, 235, 247, 0.45)', dark: 'rgba(28, 42, 61, 0.5)' },
+  '--dsw-alias-bg-overlay': { light: 'rgba(220, 231, 244, 0.6)', dark: 'rgba(34, 51, 74, 0.6)' },
+  '--dsw-alias-bg-module-platform': { light: 'rgba(255, 255, 255, 0.55)', dark: 'rgba(17, 26, 39, 0.55)' },
+  '--dsw-alias-bg-multi-select': { light: 'rgba(255, 255, 255, 0.55)', dark: 'rgba(22, 33, 48, 0.55)' },
+  '--dsw-specific-menu': { light: 'rgba(234, 241, 249, 0.6)', dark: 'rgba(22, 33, 48, 0.6)' },
+  '--dsw-specific-selector': { light: 'rgba(234, 241, 249, 0.55)', dark: 'rgba(28, 42, 61, 0.55)' },
+  '--dsw-specific-bubble': { light: 'rgba(240, 245, 252, 0.55)', dark: 'rgba(18, 28, 42, 0.55)' },
+  '--dsw-specific-bubble-highlight': { light: 'rgba(220, 233, 251, 0.55)', dark: 'rgba(26, 40, 58, 0.55)' },
+  '--dsw-specific-tip': { light: 'rgba(234, 241, 249, 0.6)', dark: 'rgba(19, 29, 43, 0.6)' },
+  '--dsw-specific-input-major': { light: 'rgba(255, 255, 255, 0.5)', dark: 'rgba(16, 25, 39, 0.5)' },
+  '--dsw-specific-login-input': { light: 'rgba(240, 245, 251, 0.5)', dark: 'rgba(13, 20, 31, 0.5)' },
+  '--dsw-alias-markdown-code-block': { light: 'rgba(240, 245, 251, 0.5)', dark: 'rgba(13, 20, 31, 0.5)' },
+  '--dsw-alias-markdown-code-block-banner': { light: 'rgba(245, 248, 253, 0.55)', dark: 'rgba(18, 27, 41, 0.55)' },
+  '--dsw-alias-markdown-inline-code': { light: 'rgba(228, 237, 248, 0.5)', dark: 'rgba(23, 35, 52, 0.5)' },
+  '--dsw-alias-markdown-citation': { light: 'rgba(234, 241, 249, 0.55)', dark: 'rgba(26, 37, 52, 0.55)' },
+  '--dsw-alias-markdown-tag': { light: 'rgba(228, 237, 248, 0.5)', dark: 'rgba(22, 33, 48, 0.5)' },
+  '--dsw-alias-markdown-placeholder': { light: 'rgba(234, 241, 249, 0.55)', dark: 'rgba(19, 29, 43, 0.55)' },
+  '--dsw-alias-toast-bg': { light: 'rgba(27, 50, 86, 0.85)', dark: 'rgba(28, 42, 61, 0.85)' },
+  '--dsw-alias-tooltip-bg': { light: 'rgba(19, 36, 62, 0.88)', dark: 'rgba(22, 33, 48, 0.88)' },
+}
+
+/** Compatibility token layer: the palette plus the translucent surfaces. */
+const COMPAT_TOKEN_OVERRIDES: ThemeTokenOverrides = { ...AQUA_TOKEN_OVERRIDES, ...COMPAT_SURFACE_OVERRIDES }
+
 /** Read the persisted enable flag (absent storage means on). */
 function readEnabled(): boolean {
   try {
@@ -179,6 +212,8 @@ function writeEnabled(value: boolean): void {
 
 /** Tunable layer knobs, persisted independently of the enable flag. */
 export interface AquaSettings {
+  /** Rendering mode: floating glass cards, or stock layout with a generic glass material. */
+  mode: 'float' | 'compat'
   /** Glass backdrop blur radius, px. */
   blur: number
   /** Glass fill opacity, 0-100 (50 = the shipped look; drives the frost multiplier). */
@@ -196,6 +231,7 @@ export interface AquaSettings {
 }
 
 const SETTINGS_DEFAULTS: AquaSettings = {
+  mode: 'float',
   blur: 2,
   frost: 20,
   fluidHue: 316,
@@ -215,6 +251,7 @@ const NUMERIC_KEYS = {
 } as const
 type NumericKey = keyof typeof NUMERIC_KEYS
 
+const MODE_KEY = 'dsh.ui-aqua.mode'
 const BACKGROUND_KEY = 'dsh.ui-aqua.background'
 const WALLPAPER_KEY = 'dsh.ui-aqua.wallpaper'
 
@@ -256,6 +293,24 @@ function readBackground(): 'fluid' | 'wallpaper' {
 function writeBackground(value: 'fluid' | 'wallpaper'): void {
   try {
     localStorage.setItem(BACKGROUND_KEY, value)
+  } catch {
+    /* in-memory state still applies */
+  }
+}
+
+/** Read the rendering mode ('float' or 'compat'). */
+function readMode(): 'float' | 'compat' {
+  try {
+    return localStorage.getItem(MODE_KEY) === 'compat' ? 'compat' : 'float'
+  } catch {
+    return 'float'
+  }
+}
+
+/** Persist the rendering mode. */
+function writeMode(value: 'float' | 'compat'): void {
+  try {
+    localStorage.setItem(MODE_KEY, value)
   } catch {
     /* in-memory state still applies */
   }
@@ -333,9 +388,9 @@ export class AquaLayer {
           this.sync()
         }
         const key = event.key
-        if (key !== null && (key in NUMERIC_KEYS || key === BACKGROUND_KEY || key === WALLPAPER_KEY)) {
+        if (key !== null && (key in NUMERIC_KEYS || key === BACKGROUND_KEY || key === WALLPAPER_KEY || key === MODE_KEY)) {
           this.reloadSettings()
-          if (this.enabled) this.applySettings()
+          if (this.enabled) { this.applySettings(); this.applyTokens() }
         }
       }
       window.addEventListener('storage', onStorage)
@@ -362,6 +417,7 @@ export class AquaLayer {
   /** Re-read every knob from localStorage into memory. */
   private reloadSettings(): void {
     this.settings = {
+      mode: readMode(),
       blur: readSetting('blur'),
       frost: readSetting('frost'),
       fluidHue: readSetting('fluidHue'),
@@ -378,6 +434,14 @@ export class AquaLayer {
     this.enabled = value
     writeEnabled(value)
     this.sync()
+  }
+
+  /** Set the rendering mode ('float' or 'compat'). */
+  setMode(value: 'float' | 'compat'): void {
+    if (value === this.settings.mode) return
+    this.settings.mode = value
+    writeMode(value)
+    if (this.enabled) { this.applySettings(); this.applyTokens() }
   }
 
   /** Set the glass blur radius (px). */
@@ -445,7 +509,7 @@ export class AquaLayer {
     else this.unmount()
   }
 
-  /** Write the knob-driven CSS variables onto <html>. */
+  /** Write the knob-driven CSS variables and mode attributes onto <html>. */
   private applySettings(): void {
     const style = document.documentElement.style
     style.setProperty('--dsh-aqua-blur', `${this.settings.blur}px`)
@@ -457,6 +521,12 @@ export class AquaLayer {
     style.setProperty('--dsh-aqua-fluid-hue', `${this.settings.fluidHue}deg`)
     style.setProperty('--dsh-aqua-wallpaper-blur', `${this.settings.wallpaperBlur}px`)
     style.setProperty('--dsh-aqua-wallpaper-frost', String(this.settings.wallpaperFrost / 100))
+
+    // Rendering mode: the float rules key off data-dsh-float; the compat
+    // (generic glass) rules key off data-dsh-compat.
+    const float = this.settings.mode === 'float'
+    document.documentElement.toggleAttribute('data-dsh-float', float)
+    document.documentElement.toggleAttribute('data-dsh-compat', !float)
 
     // Backdrop source: flip the ambient container between fluid and wallpaper.
     const ambient = document.querySelector<HTMLElement>('[data-dsh-aqua-ambient]')
@@ -471,17 +541,28 @@ export class AquaLayer {
     }
   }
 
+  /** Apply the mode's token layer (floating palette, or translucent compat). */
+  private applyTokens(): void {
+    this.tokenDisposer?.()
+    this.tokenDisposer = this.ctx.theme.overrideTokens(
+      OVERRIDE_SOURCE,
+      this.settings.mode === 'float' ? AQUA_TOKEN_OVERRIDES : COMPAT_TOKEN_OVERRIDES,
+    )
+  }
+
   private mount(): void {
     document.documentElement.setAttribute(AQUA_ATTRIBUTE, '')
     ensureAmbientScene()
     this.applySettings()
-    this.tokenDisposer = this.ctx.theme.overrideTokens(OVERRIDE_SOURCE, AQUA_TOKEN_OVERRIDES)
+    this.applyTokens()
     this.mountFluid()
     this.startSeamStamper()
   }
 
   private unmount(): void {
     document.documentElement.removeAttribute(AQUA_ATTRIBUTE)
+    document.documentElement.removeAttribute('data-dsh-float')
+    document.documentElement.removeAttribute('data-dsh-compat')
     this.tokenDisposer?.()
     this.tokenDisposer = undefined
     this.teardownFluid()

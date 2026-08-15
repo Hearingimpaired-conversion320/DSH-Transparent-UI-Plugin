@@ -39,6 +39,7 @@ export function apply(ctx: ClientContext): void {
     const s = layer.getSettings()
     bound?.sync({
       enabled: layer.getEnabled(),
+      mode: s.mode,
       blur: s.blur,
       frost: s.frost,
       fluidHue: s.fluidHue,
@@ -57,6 +58,10 @@ export function apply(ctx: ClientContext): void {
     return {
       setEnabled: (enabled) => {
         layer.setEnabled(enabled)
+        sync()
+      },
+      setMode: (mode) => {
+        layer.setMode(mode)
         sync()
       },
       setBlur: (blur) => {

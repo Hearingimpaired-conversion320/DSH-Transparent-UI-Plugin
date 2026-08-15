@@ -154,6 +154,29 @@
   color: var(--dsw-alias-label-secondary);
 }
 
+/* Mode row: the first control, with an explanation underneath. */
+.modeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dsw-alias-border-l1);
+}
+
+.modeLabel {
+  flex: none;
+  width: 92px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.modeHint {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
 .segmented {
   display: inline-flex;
   border: 1px solid var(--dsw-alias-border-l2);

@@ -17,6 +17,8 @@ import css from './AquaPluginCard.module.css'
 export interface AquaPluginCardInjected {
   /** Switch the deep-sea layer on or off. */
   setEnabled: (enabled: boolean) => void
+  /** Set the rendering mode. */
+  setMode: (value: 'float' | 'compat') => void
   /** Set the glass blur radius, px. */
   setBlur: (value: number) => void
   /** Set the glass frost amount, 0-100. */
@@ -111,8 +113,9 @@ async function fileToDataUrl(file: File): Promise<string> {
  * @returns the card list item.
  */
 export function AquaPluginCard(props: AquaPluginCardComponentProps) {
-  const { t, setEnabled, setBlur, setFrost, setFluidHue, setBackground, setWallpaper, setWallpaperBlur, setWallpaperFrost, useStore } = props
+  const { t, setEnabled, setMode, setBlur, setFrost, setFluidHue, setBackground, setWallpaper, setWallpaperBlur, setWallpaperFrost, useStore } = props
   const enabled = useStore(s => s.enabled)
+  const mode = useStore(s => s.mode)
   const blur = useStore(s => s.blur)
   const frost = useStore(s => s.frost)
   const fluidHue = useStore(s => s.fluidHue)
@@ -141,11 +144,36 @@ export function AquaPluginCard(props: AquaPluginCardComponentProps) {
         </button>
       </div>
 
-      <div className={css.controls}>
-        <Knob label={t('aqua.blur')} value={blur} min={0} max={40} step={0.5} unit="px" onChange={setBlur} />
-        <Knob label={t('aqua.frost')} value={frost} min={0} max={100} step={1} unit="%" onChange={setFrost} />
-        <Knob label={t('aqua.fluidHue')} value={fluidHue} min={0} max={360} step={1} unit="°" onChange={setFluidHue} />
+      <div className={css.modeRow}>
+        <span className={css.modeLabel}>{t('aqua.mode')}</span>
+        <div className={css.segmented}>
+          <button
+            type="button"
+            className={mode === 'float' ? css.segActive : css.seg}
+            aria-pressed={mode === 'float'}
+            onClick={() => { setMode('float') }}
+          >
+            {t('aqua.modeFloat')}
+          </button>
+          <button
+            type="button"
+            className={mode === 'compat' ? css.segActive : css.seg}
+            aria-pressed={mode === 'compat'}
+            onClick={() => { setMode('compat') }}
+          >
+            {t('aqua.modeCompat')}
+          </button>
+        </div>
       </div>
+      <div className={css.modeHint}>{t('aqua.modeHint')}</div>
+
+      {mode === 'float' && (
+        <div className={css.controls}>
+          <Knob label={t('aqua.blur')} value={blur} min={0} max={40} step={0.5} unit="px" onChange={setBlur} />
+          <Knob label={t('aqua.frost')} value={frost} min={0} max={100} step={1} unit="%" onChange={setFrost} />
+          <Knob label={t('aqua.fluidHue')} value={fluidHue} min={0} max={360} step={1} unit="°" onChange={setFluidHue} />
+        </div>
+      )}
 
       <div className={css.backdropRow}>
         <span className={css.backdropLabel}>{t('aqua.background')}</span>
