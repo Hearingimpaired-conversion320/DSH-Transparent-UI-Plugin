@@ -5,8 +5,8 @@ export const NS = 'settings.aqua'
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
-  'aqua.title': '深海主题',
-  'aqua.description': '沉浸式深海配色、统一圆角、环境辉光与可调玻璃',
+  'aqua.title': '玻璃主题',
+  'aqua.description': '全局玻璃质感，模糊度、磨砂度、背景与颜色都可自由调节',
   'aqua.enable': '开启',
   'aqua.disable': '关闭',
   'aqua.blur': '玻璃模糊度',
@@ -31,8 +31,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 
 /** English dictionary. */
 export const en = {
-  'aqua.title': 'Deep-sea theme',
-  'aqua.description': 'Immersive deep-sea palette, unified corners, ambient glow, and tunable glass',
+  'aqua.title': 'Glass theme',
+  'aqua.description': 'Global glassmorphism — blur, frost, backdrop, and color all adjustable',
   'aqua.enable': 'On',
   'aqua.disable': 'Off',
   'aqua.blur': 'Glass blur',

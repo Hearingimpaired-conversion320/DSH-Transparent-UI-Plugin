@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-client-ui-aqua",
-  "description": "Aqua: a toggleable deep-sea theme layer for the Web surface — token overrides, unified corners, ambient glow, greeting pool, and motion",
+  "description": "Aqua: a highly customizable glassmorphism theme for the Web surface — adjustable blur, frost, fluid or wallpaper backdrop, unified corners, and motion",
   "version": "0.1.0-rc.5",
   "publishConfig": {
     "access": "public"
