@@ -493,15 +493,21 @@ export class AquaLayer {
   /** Attach the fluid shader and the interaction feeds. */
   private mountFluid(): void {
     const mainCanvas = document.querySelector<HTMLCanvasElement>('[data-dsh-aqua-fluid-canvas]')
-    if (mainCanvas !== null) this.mainFluid = attachFluidShader(mainCanvas, this.fluidParams())
-    // Palette follows the Appearance switch (theme/change re-emits on every flip).
-    this.themeListener = this.ctx.on('theme/change', () => { this.applyFluidPalettes() })
-    this.applyFluidPalettes()
-    if (this.mainFluid !== undefined && mainCanvas !== null) {
-      this.interactionDisposer = attachFluidInteractions({
-        main: this.mainFluid,
-        mainCanvas,
-      })
+    try {
+      if (mainCanvas !== null) this.mainFluid = attachFluidShader(mainCanvas, this.fluidParams())
+      // Palette follows the Appearance switch (theme/change re-emits on every flip).
+      this.themeListener = this.ctx.on('theme/change', () => { this.applyFluidPalettes() })
+      this.applyFluidPalettes()
+      if (this.mainFluid !== undefined && mainCanvas !== null) {
+        this.interactionDisposer = attachFluidInteractions({
+          main: this.mainFluid,
+          mainCanvas,
+        })
+      }
+    } catch {
+      // A GPU / driver failure must never take the glass theme down with it:
+      // the ambient CSS wash still paints, only the WebGL water is skipped.
+      this.mainFluid = undefined
     }
   }
 
