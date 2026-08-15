@@ -1,5 +1,5 @@
 /* ============================================================================
- * Aqua theme layer 鈥?the deep-sea skin for the whole Web surface.
+ * Aqua theme layer —the deep-sea skin for the whole Web surface.
  * Every rule is gated on the `data-dsh-aqua` attribute the plugin puts on
  * <html> while enabled (removed on disable, and the stylesheet itself is
  * unloaded with the plugin bundle), so off == the stock UI, exactly.
@@ -10,7 +10,7 @@
 /* ---------- Canvas: body paints the base color; the frame goes transparent
    so the ambient glow (::after) shows through the main column. The
    conversation and details surfaces paint their own opaque base fill over
-   the frame 鈥?lift them too, or the glow never reaches the eye. ---------- */
+   the frame —lift them too, or the glow never reaches the eye. ---------- */
 [data-dsh-aqua] body {
   background: var(--dsw-alias-bg-base);
 }
@@ -46,7 +46,7 @@
    below the card, so scrolling text passes under the header and stays
    visible through the blur instead of hard-clipping at the card edge.
    z-index 8 (not 6) keeps it above the markdown CodeBlock sticky banner,
-   which the stock UI stacks at z-index 6 鈥?otherwise a code block's copy
+   which the stock UI stacks at z-index 6 —otherwise a code block's copy
    button row slides OVER the header and drifts as it scrolls past. */
 [data-dsh-float] [data-phase='active'] header {
   position: relative;
@@ -54,7 +54,7 @@
 }
 
 /* The floating header breaks the code block banner's sticky anchoring, so
-   disable stickiness 鈥?the banner stays on its code block and scrolls with
+   disable stickiness —the banner stays on its code block and scrolls with
    it instead of sliding over the header and drifting. */
 [data-dsh-float] [class*='banner'] {
   position: static;
@@ -66,25 +66,25 @@
 }
 
 /* No scrim: the transcript and details sit directly on the (now slightly
-   darker) fluid 鈥?the fluid itself provides the ground, so no dark veil
+   darker) fluid —the fluid itself provides the ground, so no dark veil
    covers either phase. */
 
 /* NOTE: the scrollport must NOT carry a mask-image. A mask turns the scroll
    container into a backdrop root for its sticky composer child, which breaks
    the composer card's `backdrop-filter` (the "send bar won't blur what's
-   behind it" bug) 鈥?content scrolls behind it sharp instead of frosted. */
+   behind it" bug) —content scrolls behind it sharp instead of frosted. */
 
 /* Active phase: drop the composer seat's opaque bottom slab and its 36px
-   fade band entirely 鈥?the base rule (`.root[data-phase='active']
+   fade band entirely —the base rule (`.root[data-phase='active']
    .composerSeat`) is (0,3,0), so the doubled attribute selector below must
    out-rank it or the fluid stays hidden behind a solid navy slab. */
-[data-dsh-float] [data-phase] [class*='composerSeat'][class*='composerSeat'] {
+[data-dsh-aqua] [data-phase] [class*='composerSeat'][class*='composerSeat'] {
   background: none;
 }
 
 /* ---------- Ambient scene: the living deep-sea layer (injected by the
-   plugin). A deepseek.com-style fluid board 鈥?top light wash plus three
-   slowly drifting blurred fluid masses 鈥?with marine life riding over it. ---------- */
+   plugin). A deepseek.com-style fluid board —top light wash plus three
+   slowly drifting blurred fluid masses —with marine life riding over it. ---------- */
 [data-dsh-aqua] [data-dsh-aqua-ambient] {
   position: fixed;
   inset: 0;
@@ -116,7 +116,7 @@
 }
 
 /* Fluid board canvas: the ported deepseek.com shader fills the whole
-   backdrop 鈥?one unified water under every column. */
+   backdrop —one unified water under every column. */
 [data-dsh-aqua] [data-dsh-aqua-fluid-canvas] {
   position: absolute;
   inset: 0;
@@ -290,7 +290,7 @@
   border-radius: 14px;
 }
 
-/* Composer card: the site's start-chat glass recipe 鈥?24px corners,
+/* Composer card: the site's start-chat glass recipe —24px corners,
    frosted translucent fill, backdrop blur, and a soft drop shadow.
    (Standard `backdrop-filter` only: the prefixed alias is ignored by this
    Chromium and lightningcss drops the standard property when both appear.
@@ -318,7 +318,7 @@
 }
 
 /* Fused state: once the stats line is docked underneath, the card's bottom
-   opens into it 鈥?square bottom corners, no bottom border 鈥?and its drop
+   opens into it —square bottom corners, no bottom border —and its drop
    shadow hands off to the stats band, so card + footer read as ONE glass
    card instead of two stacked pills. */
 [data-dsh-float] [data-dsh-inputbar]:has([data-dsh-stats]) [data-composer-card] {
@@ -349,7 +349,7 @@
 }
 
 /* ---------- Session header: a detached glass card, same recipe as the
-   composer. The bottom edge opens into the chat 鈥?no bottom border and a
+   composer. The bottom edge opens into the chat —no bottom border and a
    shallow shadow, so the original header/chat divider line is gone. ---------- */
 [data-dsh-float] header {
   margin: 12px 16px 0;
@@ -411,7 +411,7 @@
 }
 
 /* The sidebar root freezes at the expanded column width via an inline
-   style (the collapse crossfade needs it) 鈥?release it so the content
+   style (the collapse crossfade needs it) —release it so the content
    follows the glass panel's width instead of overflowing its right edge.
    Scoped to the dedicated seam: a broad `[class*='root']` selector would
    also hit the settings panel (which renders inside the sidebar column)
@@ -500,14 +500,14 @@
 }
 
 /* Glass surfaces: menus and dialogs follow the site's frosted recipe
-   (standard `backdrop-filter` only 鈥?see the composer card note). */
+   (standard `backdrop-filter` only —see the composer card note). */
 [data-dsh-float] [role='menu'] {
   background: color-mix(in srgb, rgb(255 255 255) calc(62% * var(--dsh-aqua-frost, 1)), transparent);
   backdrop-filter: blur(var(--dsh-aqua-blur, 14px));
 }
 
 /* Dialogs keep their native token surface (bg-layer-2) and radius; no
-   translucent override and no backdrop blur 鈥?the override made the panel
+   translucent override and no backdrop blur —the override made the panel
    muddy and the blur scrambled its fixed-position layout. */
 [data-dsh-float] body[data-ds-dark-theme] [role='menu'] {
   background: color-mix(in srgb, rgb(28 32 42) calc(68% * var(--dsh-aqua-frost, 1)), transparent);
@@ -524,7 +524,7 @@
 }
 
 /* ---------- Display typography: the serif face marks headings and the
-   session tree, so the page reads in two voices 鈥?serif headings over the
+   session tree, so the page reads in two voices —serif headings over the
    sans body. Space Grotesk keeps Latin/digits in the same stack. ---------- */
 [data-dsh-float] [role='dialog'] h2 {
   font-family: 'Space Grotesk Variable', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
@@ -538,7 +538,7 @@
 }
 
 /* ---------- Page-level transitions: phase flips, view tabs, entrances.
-   Container-level animations are opacity-only 鈥?a running transform would
+   Container-level animations are opacity-only —a running transform would
    re-anchor position:fixed descendants (menus/modals) mid-flight. ---------- */
 [data-dsh-float] [data-phase='hero'] {
   animation: dsh-aqua-hero-in 0.32s var(--ds-ease-in-out);
