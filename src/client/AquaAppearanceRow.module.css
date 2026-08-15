@@ -61,6 +61,15 @@
   color: var(--dsw-alias-label-tertiary);
 }
 
+/* Hint under the brightness knob, aligned with the slider (label 92 + gap 10). */
+.knobHint {
+  margin-top: -4px;
+  margin-left: 102px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
 /* Knob: label, slider, number box + unit. */
 .knob {
   display: flex;

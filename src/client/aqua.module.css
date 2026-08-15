@@ -104,8 +104,9 @@
     radial-gradient(900px 420px at 50% 108%, rgba(94, 143, 224, 0.09), transparent 70%);
 }
 
-/* Background brightness knob: below 50 fades the backdrop toward pure black,
-   above 50 toward pure white; exactly 50 keeps both overlays transparent.
+/* Background brightness knob: dark mode darkens (0 = pure black, 50 = off),
+   light mode brightens (50 = off, 100 = pure white) — the layer writes only
+   the overlay of the resolved scheme, so at most one layer is ever opaque.
    Both layers live in ::after (painted ABOVE the fluid canvas / wallpaper
    children); ::before would sit behind them and be invisible. */
 [data-dsh-aqua] [data-dsh-aqua-ambient]::after {

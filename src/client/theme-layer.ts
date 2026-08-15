@@ -375,6 +375,8 @@ function activeScheme(): 'light' | 'dark' {
 export class AquaLayer {
   private enabled = false
   private settings: AquaSettings = { ...SETTINGS_DEFAULTS }
+  /** Resolved palette scheme: dark = the brightness knob darkens, light = it brightens. */
+  private dark = false
   private tokenDisposer: (() => void) | undefined
   private mainFluid: FluidShaderHandle | undefined
   private interactionDisposer: (() => void) | undefined
@@ -400,13 +402,26 @@ export class AquaLayer {
         }
       }
       window.addEventListener('storage', onStorage)
+      // Follow the Appearance switch: the brightness knob's half-range and
+      // the overlay direction flip with the resolved scheme (`system` follows
+      // the OS). Runs even while disabled so the settings row stays correct.
+      this.themeListener = this.ctx.on('theme/change', () => {
+        this.dark = this.resolveScheme()
+        if (this.enabled) {
+          this.applySettings()
+          this.applyFluidPalettes()
+        }
+      })
       return () => {
         window.removeEventListener('storage', onStorage)
+        this.themeListener?.()
+        this.themeListener = undefined
         this.unmount()
       }
     }, 'ui-aqua: layer lifecycle')
     this.enabled = readEnabled()
     this.reloadSettings()
+    this.dark = this.resolveScheme()
     this.sync()
   }
 
@@ -418,6 +433,20 @@ export class AquaLayer {
   /** Current knob values (the settings row mirrors these). */
   getSettings(): AquaSettings {
     return { ...this.settings }
+  }
+
+  /** Whether the resolved palette is dark (the brightness knob darkens). */
+  getDark(): boolean {
+    return this.dark
+  }
+
+  /** Resolved scheme from the theme service (falls back to the body attribute). */
+  private resolveScheme(): boolean {
+    try {
+      return this.ctx.theme.getTheme().active.colorScheme === 'dark'
+    } catch {
+      return activeScheme() === 'dark'
+    }
   }
 
   /** Re-read every knob from localStorage into memory. */
@@ -537,10 +566,12 @@ export class AquaLayer {
     style.setProperty('--dsh-aqua-fluid-hue', `${this.settings.fluidHue}deg`)
     style.setProperty('--dsh-aqua-wallpaper-blur', `${this.settings.wallpaperBlur}px`)
     style.setProperty('--dsh-aqua-wallpaper-frost', String(this.settings.wallpaperFrost / 100))
-    // Background brightness: below 50 fades toward pure black, above 50
-    // toward pure white, exactly 50 is transparent (no overlay).
-    style.setProperty('--dsh-aqua-brightness-black', String(Math.max(0, (50 - this.settings.bgBrightness) / 50)))
-    style.setProperty('--dsh-aqua-brightness-white', String(Math.max(0, (this.settings.bgBrightness - 50) / 50)))
+    // Background brightness: dark mode darkens (0 = pure black, 50 = off),
+    // light mode brightens (50 = off, 100 = pure white) — the knob's range
+    // and the overlay direction both follow the resolved scheme.
+    const dark = this.dark
+    style.setProperty('--dsh-aqua-brightness-black', String(dark ? Math.max(0, (50 - this.settings.bgBrightness) / 50) : 0))
+    style.setProperty('--dsh-aqua-brightness-white', String(dark ? 0 : Math.max(0, (this.settings.bgBrightness - 50) / 50)))
 
     // Rendering mode: the float rules key off data-dsh-float; the compat
     // (generic glass) rules key off data-dsh-compat.
@@ -596,8 +627,8 @@ export class AquaLayer {
     const mainCanvas = document.querySelector<HTMLCanvasElement>('[data-dsh-aqua-fluid-canvas]')
     try {
       if (mainCanvas !== null) this.mainFluid = attachFluidShader(mainCanvas, this.fluidParams())
-      // Palette follows the Appearance switch (theme/change re-emits on every flip).
-      this.themeListener = this.ctx.on('theme/change', () => { this.applyFluidPalettes() })
+      // Palette follows the Appearance switch via the layer-lifecycle
+      // `theme/change` listener (which also refreshes the brightness overlay).
       this.applyFluidPalettes()
       if (this.mainFluid !== undefined && mainCanvas !== null) {
         this.interactionDisposer = attachFluidInteractions({
@@ -613,8 +644,6 @@ export class AquaLayer {
   }
 
   private teardownFluid(): void {
-    this.themeListener?.()
-    this.themeListener = undefined
     this.interactionDisposer?.()
     this.interactionDisposer = undefined
     this.mainFluid?.dispose()

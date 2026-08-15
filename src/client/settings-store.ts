@@ -19,6 +19,8 @@ export interface AquaRowState {
   fluidHue: number
   /** Background brightness, 0-100. */
   bgBrightness: number
+  /** Resolved palette is dark (brightness knob = darkening half). */
+  dark: boolean
   /** Backdrop source: fluid board or custom wallpaper. */
   background: 'fluid' | 'wallpaper'
   /** Wallpaper image data URL. */
@@ -39,6 +41,7 @@ export interface AquaSettingsPayload {
   frost: number
   fluidHue: number
   bgBrightness: number
+  dark: boolean
   background: 'fluid' | 'wallpaper'
   wallpaper: string
   wallpaperBlur: number
@@ -63,6 +66,7 @@ export function createAquaRowStore(): EngineStoreHandle<AquaRowState, AquaRowAct
       frost: 20,
       fluidHue: 316,
       bgBrightness: 50,
+      dark: false,
       background: 'fluid',
       wallpaper: '',
       wallpaperBlur: 0,
@@ -78,6 +82,7 @@ export function createAquaRowStore(): EngineStoreHandle<AquaRowState, AquaRowAct
         d.frost = next.frost
         d.fluidHue = next.fluidHue
         d.bgBrightness = next.bgBrightness
+        d.dark = next.dark
         d.background = next.background
         d.wallpaper = next.wallpaper
         d.wallpaperBlur = next.wallpaperBlur

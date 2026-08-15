@@ -55,6 +55,7 @@ export function apply(ctx: ClientContext): void {
       frost: s.frost,
       fluidHue: s.fluidHue,
       bgBrightness: s.bgBrightness,
+      dark: layer.getDark(),
       background: s.background,
       wallpaper: s.wallpaper,
       wallpaperBlur: s.wallpaperBlur,
@@ -67,6 +68,9 @@ export function apply(ctx: ClientContext): void {
     appearanceBound?.sync(next, revision)
     revision += 1
   }
+  // The Appearance switch flips the brightness knob's half-range; re-sync
+  // both stores so the row re-renders with the new range.
+  ctx.effect(() => ctx.on('theme/change', () => { sync() }), 'ui-aqua: appearance scheme sync')
 
   const pluginInjected = (actions: BoundActions<typeof pluginStore>): AquaPluginCardInjected => {
     pluginBound = actions

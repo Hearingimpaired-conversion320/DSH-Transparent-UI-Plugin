@@ -58,10 +58,19 @@ export function AquaAppearanceRow(props: AquaAppearanceRowComponentProps) {
   const frost = useStore(s => s.frost)
   const fluidHue = useStore(s => s.fluidHue)
   const bgBrightness = useStore(s => s.bgBrightness)
+  const dark = useStore(s => s.dark)
   const background = useStore(s => s.background)
   const wallpaperBlur = useStore(s => s.wallpaperBlur)
   const wallpaperFrost = useStore(s => s.wallpaperFrost)
   const fileRef = useRef<HTMLInputElement | null>(null)
+
+  // The brightness knob only ever offers the half that makes sense for the
+  // resolved scheme: dark mode darkens (0-50), light mode brightens (50-100).
+  // The stored 0-100 value is clamped for display; writing always stays in
+  // the offered range, so a value picked in one scheme is inert in the other.
+  const bgMin = dark ? 0 : 50
+  const bgMax = dark ? 50 : 100
+  const bgDisplay = Math.min(bgMax, Math.max(bgMin, bgBrightness))
 
   return (
     <div className={css.group}>
@@ -90,7 +99,10 @@ export function AquaAppearanceRow(props: AquaAppearanceRowComponentProps) {
           </>
         )}
         <Knob label={t('aqua.fluidHue')} value={fluidHue} min={0} max={360} step={1} unit="°" onChange={setFluidHue} />
-        <Knob label={t('aqua.bgBrightness')} value={bgBrightness} min={0} max={100} step={1} unit="%" onChange={setBgBrightness} />
+        <Knob label={t('aqua.bgBrightness')} value={bgDisplay} min={bgMin} max={bgMax} step={1} unit="%" onChange={setBgBrightness} />
+        <div className={css.knobHint}>
+          {t(dark ? 'aqua.bgBrightnessHintDark' : 'aqua.bgBrightnessHintLight')}
+        </div>
 
         <div className={css.row}>
           <span className={css.rowLabel}>{t('aqua.background')}</span>
