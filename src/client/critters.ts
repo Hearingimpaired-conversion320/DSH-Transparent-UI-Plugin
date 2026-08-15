@@ -102,3 +102,21 @@ export function ensureAmbientScene(): HTMLElement {
 export function removeAmbientScene(): void {
   for (const node of document.querySelectorAll('[data-dsh-aqua-ambient]')) node.remove()
 }
+
+/** Add the page edge-fade bands (5px gradient blur over the chat content). */
+export function ensurePageFades(): void {
+  if (document.querySelector('[data-dsh-aqua-fade]') !== null) return
+  const top = document.createElement('div')
+  top.setAttribute('data-dsh-aqua-fade', 'top')
+  top.setAttribute('aria-hidden', 'true')
+  const bottom = document.createElement('div')
+  bottom.setAttribute('data-dsh-aqua-fade', 'bottom')
+  bottom.setAttribute('aria-hidden', 'true')
+  document.body.appendChild(top)
+  document.body.appendChild(bottom)
+}
+
+/** Remove the edge-fade bands. */
+export function removePageFades(): void {
+  for (const el of document.querySelectorAll('[data-dsh-aqua-fade]')) el.remove()
+}

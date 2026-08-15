@@ -1,14 +1,16 @@
 /**
  * Aqua row registered into the General settings section
- * (`settings.general.item`, right under Appearance): every glass knob — mode,
- * blur/frost (floating mode only), fluid color, background brightness, the
- * backdrop source picker, and the wallpaper picker with its two knobs. Every
+ * (`settings.general.item`, right under Appearance): every glass knob — mode
+ * (mica / compatibility), blur/frost (mica mode only), fluid color,
+ * background brightness, the backdrop source picker, and the wallpaper
+ * picker with its two knobs. Every
  * write goes straight through to the layer, so the skin moves live. The
  * controls follow the Appearance cubes directly (no row title of their own),
  * and the whole row renders nothing while the master switch in the Plugins
  * section is off.
  */
 import { useRef } from 'react'
+import { IconCheckOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
 // Type-only: pulls the `settings.general.item` SlotMap merge.
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
@@ -19,7 +21,7 @@ import css from './AquaAppearanceRow.module.css'
 /** Injected business face: every knob write except the master switch. */
 export interface AquaAppearanceRowInjected {
   /** Set the rendering mode. */
-  setMode: (value: 'float' | 'compat') => void
+  setMode: (value: 'mica' | 'compat') => void
   /** Set the glass blur radius, px. */
   setBlur: (value: number) => void
   /** Set the glass frost amount, 0-100. */
@@ -32,6 +34,8 @@ export interface AquaAppearanceRowInjected {
   setBackground: (value: 'fluid' | 'wallpaper') => void
   /** Set the wallpaper image (a data URL). */
   setWallpaper: (value: string) => void
+  /** Set the particle-whale flag. */
+  setWhale: (value: boolean) => void
   /** Set the wallpaper blur radius, px. */
   setWallpaperBlur: (value: number) => void
   /** Set the wallpaper frost veil, 0-100. */
@@ -51,7 +55,7 @@ export type AquaAppearanceRowComponentProps =
 export function AquaAppearanceRow(props: AquaAppearanceRowComponentProps) {
   const {
     t, setMode, setBlur, setFrost, setFluidHue, setBgBrightness,
-    setBackground, setWallpaper, setWallpaperBlur, setWallpaperFrost, useStore,
+    setBackground, setWallpaper, setWhale, setWallpaperBlur, setWallpaperFrost, useStore,
   } = props
   const enabled = useStore(s => s.enabled)
   const mode = useStore(s => s.mode)
@@ -61,6 +65,7 @@ export function AquaAppearanceRow(props: AquaAppearanceRowComponentProps) {
   const bgBrightness = useStore(s => s.bgBrightness)
   const dark = useStore(s => s.dark)
   const background = useStore(s => s.background)
+  const whale = useStore(s => s.whale)
   const wallpaperBlur = useStore(s => s.wallpaperBlur)
   const wallpaperFrost = useStore(s => s.wallpaperFrost)
   const fileRef = useRef<HTMLInputElement | null>(null)
@@ -85,7 +90,7 @@ export function AquaAppearanceRow(props: AquaAppearanceRowComponentProps) {
             label={t('aqua.mode')}
             value={mode}
             options={[
-              { id: 'float', label: t('aqua.modeFloat') },
+              { id: 'mica', label: t('aqua.modeMica') },
               { id: 'compat', label: t('aqua.modeCompat') },
             ]}
             onSelect={setMode}
@@ -93,7 +98,23 @@ export function AquaAppearanceRow(props: AquaAppearanceRowComponentProps) {
         </div>
         <div className={css.rowHint}>{t('aqua.modeHint')}</div>
 
-        {mode === 'float' && (
+        <div className={css.row}>
+          <span className={css.rowLabel}>{t('aqua.whale')}</span>
+          <button
+            type="button"
+            className={whale ? css.toggleOn : css.toggle}
+            aria-pressed={whale}
+            onClick={() => { setWhale(!whale) }}
+          >
+            <span className={css.check}>
+              {whale && <IconCheckOutline16 />}
+            </span>
+            {whale ? t('aqua.enable') : t('aqua.disable')}
+          </button>
+        </div>
+        <div className={css.knobHint}>{t('aqua.whaleHint')}</div>
+
+        {mode === 'mica' && (
           <>
             <Knob label={t('aqua.blur')} value={blur} min={0} max={40} step={0.5} unit="px" onChange={setBlur} />
             <Knob label={t('aqua.frost')} value={frost} min={0} max={100} step={1} unit="%" onChange={setFrost} />

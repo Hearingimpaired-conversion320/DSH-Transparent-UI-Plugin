@@ -58,6 +58,7 @@ export function apply(ctx: ClientContext): void {
       dark: layer.getDark(),
       background: s.background,
       wallpaper: s.wallpaper,
+      whale: s.whale,
       wallpaperBlur: s.wallpaperBlur,
       wallpaperFrost: s.wallpaperFrost,
     }
@@ -114,6 +115,10 @@ export function apply(ctx: ClientContext): void {
       },
       setWallpaper: (wallpaper) => {
         layer.setWallpaper(wallpaper)
+        sync()
+      },
+      setWhale: (whale) => {
+        layer.setWhale(whale)
         sync()
       },
       setWallpaperBlur: (wallpaperBlur) => {

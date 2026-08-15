@@ -14,10 +14,12 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { ThemeTokenOverrides } from '@deepseek-ai/dsh-client-ui-theme/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
-import { ensureAmbientScene, removeAmbientScene } from './critters.ts'
+import { ensureAmbientScene, removeAmbientScene, ensurePageFades, removePageFades } from './critters.ts'
 import { attachFluidShader, SITE_FLUID_PARAMS, type FluidParams, type FluidShaderHandle } from './fluid-shader.ts'
 import { attachFluidInteractions } from './fluid-interactions.ts'
 import { startSeamStamper } from './seam-stamper.ts'
+import { mountWhale, type WhaleHandle } from './whale.ts'
+import { startWordmarkBadge, type BadgeHandle } from './wordmark-badge.ts'
 
 /** html attribute selecting the Aqua layer: CSS hooks and ambient effects. */
 export const AQUA_ATTRIBUTE = 'data-dsh-aqua'
@@ -212,8 +214,8 @@ function writeEnabled(value: boolean): void {
 
 /** Tunable layer knobs, persisted independently of the enable flag. */
 export interface AquaSettings {
-  /** Rendering mode: floating glass cards, or stock layout with a generic glass material. */
-  mode: 'float' | 'compat'
+  /** Rendering mode: mica (frosted floating cards) or the stock layout with a generic glass material. */
+  mode: 'mica' | 'compat'
   /** Glass backdrop blur radius, px. */
   blur: number
   /** Glass fill opacity, 0-100 (50 = the shipped look; drives the frost multiplier). */
@@ -226,6 +228,8 @@ export interface AquaSettings {
   background: 'fluid' | 'wallpaper'
   /** Wallpaper image data URL (empty until one is picked). */
   wallpaper: string
+  /** Particle whale in the chat area center (the harness hero fish). */
+  whale: boolean
   /** Wallpaper blur radius, px. */
   wallpaperBlur: number
   /** Wallpaper frost veil, 0-100. */
@@ -233,13 +237,14 @@ export interface AquaSettings {
 }
 
 const SETTINGS_DEFAULTS: AquaSettings = {
-  mode: 'float',
+  mode: 'mica',
   blur: 2,
   frost: 20,
   fluidHue: 316,
   bgBrightness: 50,
   background: 'fluid',
   wallpaper: '',
+  whale: true,
   wallpaperBlur: 0,
   wallpaperFrost: 0,
 }
@@ -258,6 +263,7 @@ type NumericKey = keyof typeof NUMERIC_KEYS
 const MODE_KEY = 'dsh.ui-aqua.mode'
 const BACKGROUND_KEY = 'dsh.ui-aqua.background'
 const WALLPAPER_KEY = 'dsh.ui-aqua.wallpaper'
+const WHALE_KEY = 'dsh.ui-aqua.whale'
 
 /** Clamp a numeric knob into its sane range. */
 function clampSetting(key: NumericKey, value: number): number {
@@ -304,17 +310,20 @@ function writeBackground(value: 'fluid' | 'wallpaper'): void {
   }
 }
 
-/** Read the rendering mode ('float' or 'compat'). */
-function readMode(): 'float' | 'compat' {
+/** Read the rendering mode ('mica' or 'compat'; legacy 'float'/'liquid'
+ *  values migrate to 'mica'). */
+function readMode(): 'mica' | 'compat' {
   try {
-    return localStorage.getItem(MODE_KEY) === 'compat' ? 'compat' : 'float'
+    const stored = localStorage.getItem(MODE_KEY)
+    if (stored === 'compat') return 'compat'
+    return 'mica'
   } catch {
-    return 'float'
+    return 'mica'
   }
 }
 
 /** Persist the rendering mode. */
-function writeMode(value: 'float' | 'compat'): void {
+function writeMode(value: 'mica' | 'compat'): void {
   try {
     localStorage.setItem(MODE_KEY, value)
   } catch {
@@ -335,6 +344,25 @@ function readWallpaper(): string {
 function writeWallpaper(value: string): void {
   try {
     localStorage.setItem(WALLPAPER_KEY, value)
+  } catch {
+    /* in-memory state still applies for this tab */
+  }
+}
+
+/** Read the particle-whale flag (absent means on). */
+function readWhale(): boolean {
+  try {
+    const raw = localStorage.getItem(WHALE_KEY)
+    return raw === null ? true : raw === 'true'
+  } catch {
+    return true
+  }
+}
+
+/** Persist the particle-whale flag. */
+function writeWhale(value: boolean): void {
+  try {
+    localStorage.setItem(WHALE_KEY, String(value))
   } catch {
     /* in-memory state still applies for this tab */
   }
@@ -382,6 +410,8 @@ export class AquaLayer {
   private interactionDisposer: (() => void) | undefined
   private themeListener: (() => void) | undefined
   private seamDisposer: (() => void) | undefined
+  private whaleHandle: WhaleHandle | undefined
+  private badgeHandle: BadgeHandle | undefined
   private readonly ctx: Context
 
   /**
@@ -396,9 +426,9 @@ export class AquaLayer {
           this.sync()
         }
         const key = event.key
-        if (key !== null && (key in NUMERIC_KEYS || key === BACKGROUND_KEY || key === WALLPAPER_KEY || key === MODE_KEY)) {
+        if (key !== null && (key in NUMERIC_KEYS || key === BACKGROUND_KEY || key === WALLPAPER_KEY || key === MODE_KEY || key === WHALE_KEY)) {
           this.reloadSettings()
-          if (this.enabled) { this.applySettings(); this.applyTokens() }
+          if (this.enabled) { this.applySettings(); this.applyTokens(); this.syncWhale() }
         }
       }
       window.addEventListener('storage', onStorage)
@@ -407,6 +437,8 @@ export class AquaLayer {
       // the OS). Runs even while disabled so the settings row stays correct.
       this.themeListener = this.ctx.on('theme/change', () => {
         this.dark = this.resolveScheme()
+        this.whaleHandle?.setDark(this.dark)
+        this.badgeHandle?.setDark(this.dark)
         if (this.enabled) {
           this.applySettings()
           this.applyFluidPalettes()
@@ -459,6 +491,7 @@ export class AquaLayer {
       bgBrightness: readSetting('bgBrightness'),
       background: readBackground(),
       wallpaper: readWallpaper(),
+      whale: readWhale(),
       wallpaperBlur: readSetting('wallpaperBlur'),
       wallpaperFrost: readSetting('wallpaperFrost'),
     }
@@ -472,8 +505,8 @@ export class AquaLayer {
     this.sync()
   }
 
-  /** Set the rendering mode ('float' or 'compat'). */
-  setMode(value: 'float' | 'compat'): void {
+  /** Set the rendering mode ('mica' or 'compat'). */
+  setMode(value: 'mica' | 'compat'): void {
     if (value === this.settings.mode) return
     this.settings.mode = value
     writeMode(value)
@@ -531,6 +564,14 @@ export class AquaLayer {
     if (this.enabled) this.applySettings()
   }
 
+  /** Set the particle-whale flag (chat-area center decoration). */
+  setWhale(value: boolean): void {
+    if (value === this.settings.whale) return
+    this.settings.whale = value
+    writeWhale(value)
+    if (this.enabled) this.syncWhale()
+  }
+
   /** Set the wallpaper blur radius (px). */
   setWallpaperBlur(value: number): void {
     const next = clampSetting('wallpaperBlur', value)
@@ -575,9 +616,9 @@ export class AquaLayer {
 
     // Rendering mode: the float rules key off data-dsh-float; the compat
     // (generic glass) rules key off data-dsh-compat.
-    const float = this.settings.mode === 'float'
-    document.documentElement.toggleAttribute('data-dsh-float', float)
-    document.documentElement.toggleAttribute('data-dsh-compat', !float)
+    const compat = this.settings.mode === 'compat'
+    document.documentElement.toggleAttribute('data-dsh-float', !compat)
+    document.documentElement.toggleAttribute('data-dsh-compat', compat)
 
     // Backdrop source: flip the ambient container between fluid and wallpaper.
     const ambient = document.querySelector<HTMLElement>('[data-dsh-aqua-ambient]')
@@ -597,27 +638,48 @@ export class AquaLayer {
     this.tokenDisposer?.()
     this.tokenDisposer = this.ctx.theme.overrideTokens(
       OVERRIDE_SOURCE,
-      this.settings.mode === 'float' ? AQUA_TOKEN_OVERRIDES : COMPAT_TOKEN_OVERRIDES,
+      this.settings.mode === 'compat' ? COMPAT_TOKEN_OVERRIDES : AQUA_TOKEN_OVERRIDES,
     )
   }
 
   private mount(): void {
     document.documentElement.setAttribute(AQUA_ATTRIBUTE, '')
     ensureAmbientScene()
+    ensurePageFades()
     this.applySettings()
     this.applyTokens()
     this.mountFluid()
     this.startSeamStamper()
+    this.syncWhale()
+    if (this.badgeHandle === undefined) this.badgeHandle = startWordmarkBadge(this.dark)
+  }
+
+  /** Mount or drop the particle whale to match enabled + the whale flag. */
+  private syncWhale(): void {
+    if (this.enabled && this.settings.whale) {
+      if (this.whaleHandle !== undefined) return
+      const ambient = document.querySelector<HTMLElement>('[data-dsh-aqua-ambient]')
+      if (ambient === null) return
+      this.whaleHandle = mountWhale(ambient, this.dark)
+    } else {
+      this.whaleHandle?.dispose()
+      this.whaleHandle = undefined
+    }
   }
 
   private unmount(): void {
     document.documentElement.removeAttribute(AQUA_ATTRIBUTE)
     document.documentElement.removeAttribute('data-dsh-float')
     document.documentElement.removeAttribute('data-dsh-compat')
+    this.whaleHandle?.dispose()
+    this.whaleHandle = undefined
+    this.badgeHandle?.dispose()
+    this.badgeHandle = undefined
     this.tokenDisposer?.()
     this.tokenDisposer = undefined
     this.teardownFluid()
     removeAmbientScene()
+    removePageFades()
     this.seamDisposer?.()
     this.seamDisposer = undefined
   }

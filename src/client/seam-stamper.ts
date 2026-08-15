@@ -42,6 +42,8 @@ const SEAMS: readonly Seam[] = [
   { attribute: 'data-dsh-add', selector: '[data-composer-card] [class*="add"]' },
   // Session stats line under the composer (composer.dock slot).
   { attribute: 'data-dsh-stats', selector: '[data-slot="conversation.composer.dock"] [class*="root"]' },
+  // The sidebar wordmark button (its badge plate gets the official pill).
+  { attribute: 'data-dsh-wordmark', selector: '[class*="sidebarCol"] [class*="brand"]', first: true },
 ]
 
 function stamp(seam: Seam): void {

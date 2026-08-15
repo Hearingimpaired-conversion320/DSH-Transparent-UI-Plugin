@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-Aqua is a highly customizable glassmorphism theme for the DeepSeek Harness web UI. The header, sidebar, composer, stats line, and trajectory view all become panes of frosted glass. Two modes are built in: Floating Glass restyles the layout into floating cards, while Compatibility Mode keeps the stock layout untouched and only swaps the material to glass — so other plugins' UI gets the same treatment automatically. Glass blur, frost amount, and the backdrop are all adjustable from the settings card — pick a living fluid or drop in your own wallpaper (with its own blur and frost). Switch it off and the stock UI comes back exactly, with no source changes to DSH itself.
+Aqua is a highly customizable glassmorphism theme for the DeepSeek Harness web UI. The header, sidebar, composer, stats line, and trajectory view all become panes of frosted glass. Two modes are built in: Mica restyles the layout into floating cards, while Compatibility Mode keeps the stock layout untouched and only swaps the material to glass — so other plugins' UI gets the same treatment automatically. Glass blur, frost amount, and the backdrop are all adjustable from the settings card — pick a living fluid or drop in your own wallpaper (with its own blur and frost). It also ships the site's **particle whale** (centered in the chat area, white on dark / gray on light, toggleable), a glossy **"Harness" badge** on the dark wordmark, and 5px gradient blur fades at the page edges. Switch it off and the stock UI comes back exactly, with no source changes to DSH itself.
 
 ![](assets/1.png)
 

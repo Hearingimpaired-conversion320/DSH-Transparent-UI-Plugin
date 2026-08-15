@@ -169,6 +169,28 @@
   background: rgb(12 18 27 / var(--dsh-aqua-wallpaper-frost, 0));
 }
 
+/* Particle whale: centered on the main column (position/size arrive inline
+   from the engine — the [data-phase] area right of the sidebar), screen
+   blended over the dark backdrop, multiply blended (gray particles) over
+   the light one. */
+[data-dsh-aqua] [data-dsh-aqua-whale] {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.92;
+}
+
+[data-dsh-aqua] [data-dsh-aqua-whale][data-scheme='light'] {
+  mix-blend-mode: multiply;
+}
+
+[data-dsh-aqua] [data-dsh-aqua-whale] canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 /* Backdrop source: hide whichever board is not the active one. */
 [data-dsh-aqua] [data-dsh-aqua-ambient][data-background='wallpaper'] [data-dsh-aqua-fluid-canvas] {
   display: none;
@@ -525,6 +547,46 @@
    muddy and the blur scrambled its fixed-position layout. */
 [data-dsh-float] body[data-ds-dark-theme] [role='menu'] {
   background: color-mix(in srgb, rgb(28 32 42) calc(68% * var(--dsh-aqua-frost, 1)), transparent);
+}
+
+/* ---------- Page edge fades: 5px gradient blur bands pinned to the top and
+   bottom of the viewport, ABOVE the chat content (z-index 9 > the header
+   card's 8) — content scrolling under an edge melts into a soft blur that
+   fades out across the band, with a faint scheme veil: a touch of white on
+   light, a touch of black on dark. Click-transparent, so nothing is
+   blocked. ---------- */
+[data-dsh-aqua] [data-dsh-aqua-fade] {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 40px;
+  z-index: 9;
+  pointer-events: none;
+  backdrop-filter: blur(5px);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+[data-dsh-aqua] body[data-ds-dark-theme] [data-dsh-aqua-fade] {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+[data-dsh-aqua] [data-dsh-aqua-fade='top'] {
+  top: 0;
+  -webkit-mask-image: linear-gradient(180deg, black 0%, transparent 100%);
+  mask-image: linear-gradient(180deg, black 0%, transparent 100%);
+}
+
+[data-dsh-aqua] [data-dsh-aqua-fade='bottom'] {
+  bottom: 0;
+  -webkit-mask-image: linear-gradient(0deg, black 0%, transparent 100%);
+  mask-image: linear-gradient(0deg, black 0%, transparent 100%);
+}
+
+/* ---------- Wordmark badge swap: the decorator stamps the plate rect and
+   the knocked-out HARNESS letterforms with data-dsh-aqua-badge-hidden and
+   overlays the official "Harness" pill; these rules do the hiding. ---------- */
+[data-dsh-aqua] [data-dsh-aqua-badge-hidden] {
+  display: none;
 }
 
 /* ---------- Keyboard focus and text selection (both schemes). ---------- */

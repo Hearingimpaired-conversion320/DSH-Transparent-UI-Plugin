@@ -9,8 +9,8 @@ import { defineStore, type EngineStoreHandle } from '@deepseek-ai/dsh-client-run
 export interface AquaRowState {
   /** Persisted layer enable flag. */
   enabled: boolean
-  /** Rendering mode: floating glass cards or stock layout with generic glass. */
-  mode: 'float' | 'compat'
+  /** Rendering mode: mica or stock layout with generic glass. */
+  mode: 'mica' | 'compat'
   /** Glass blur radius, px. */
   blur: number
   /** Glass frost amount, 0-100. */
@@ -25,6 +25,8 @@ export interface AquaRowState {
   background: 'fluid' | 'wallpaper'
   /** Wallpaper image data URL. */
   wallpaper: string
+  /** Particle whale in the chat area center. */
+  whale: boolean
   /** Wallpaper blur radius, px. */
   wallpaperBlur: number
   /** Wallpaper frost veil, 0-100. */
@@ -36,7 +38,7 @@ export interface AquaRowState {
 /** The full payload the layer pushes into the row store on every change. */
 export interface AquaSettingsPayload {
   enabled: boolean
-  mode: 'float' | 'compat'
+  mode: 'mica' | 'compat'
   blur: number
   frost: number
   fluidHue: number
@@ -44,6 +46,7 @@ export interface AquaSettingsPayload {
   dark: boolean
   background: 'fluid' | 'wallpaper'
   wallpaper: string
+  whale: boolean
   wallpaperBlur: number
   wallpaperFrost: number
 }
@@ -61,7 +64,7 @@ export function createAquaRowStore(): EngineStoreHandle<AquaRowState, AquaRowAct
   return defineStore({
     init: (): AquaRowState => ({
       enabled: true,
-      mode: 'float',
+      mode: 'mica',
       blur: 2,
       frost: 20,
       fluidHue: 316,
@@ -69,6 +72,7 @@ export function createAquaRowStore(): EngineStoreHandle<AquaRowState, AquaRowAct
       dark: false,
       background: 'fluid',
       wallpaper: '',
+      whale: true,
       wallpaperBlur: 0,
       wallpaperFrost: 0,
       revision: -1,
@@ -85,6 +89,7 @@ export function createAquaRowStore(): EngineStoreHandle<AquaRowState, AquaRowAct
         d.dark = next.dark
         d.background = next.background
         d.wallpaper = next.wallpaper
+        d.whale = next.whale
         d.wallpaperBlur = next.wallpaperBlur
         d.wallpaperFrost = next.wallpaperFrost
         d.revision = revision
