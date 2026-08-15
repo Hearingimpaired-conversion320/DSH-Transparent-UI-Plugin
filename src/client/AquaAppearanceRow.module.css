@@ -1,42 +1,21 @@
-/* Aqua row in the General settings section: same shell language as the
- * shipped Appearance row (pad 16/0, hairline separator; the section column
- * strips it when last), holding every glass knob. */
+/* Aqua row in the General settings section: controls that follow the
+ * Appearance cubes directly (no row title of their own), same hairline
+ * separator rhythm as the shipped rows; the section column strips the last
+ * one. Nothing renders while the master switch is off. */
 
 .group {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 16px 0;
+  padding: 8px 0 16px;
   border-bottom: 1px solid var(--dsw-alias-border-l2);
 }
 
-.title {
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 22px;
-  color: var(--dsw-alias-label-primary);
-}
-
-/* Shown while the master switch in Plugins is off. */
-.disabledHint {
-  font-size: 12px;
-  line-height: 18px;
-  color: var(--dsw-alias-label-tertiary);
-}
-
-/* Controls stack: one hairline-separated column of rows and knobs. */
+/* Controls stack: one column of rows and knobs. */
 .controls {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding-top: 12px;
-  border-top: 1px solid var(--dsw-alias-border-l1);
-  transition: opacity 0.16s;
-}
-
-/* Off state: still writable, just visually parked. */
-.dim {
-  opacity: 0.55;
 }
 
 /* Label + segmented picker row (mode / backdrop source). */
@@ -54,14 +33,16 @@
   color: var(--dsw-alias-label-secondary);
 }
 
+/* Hints under a row/knob: indented to the control column (label 92 + gap 10)
+ * so every explanation lines up with the control it describes. */
 .rowHint {
-  margin-top: -2px;
+  margin-top: -4px;
+  margin-left: 102px;
   font-size: 12px;
   line-height: 18px;
   color: var(--dsw-alias-label-tertiary);
 }
 
-/* Hint under the brightness knob, aligned with the slider (label 92 + gap 10). */
 .knobHint {
   margin-top: -4px;
   margin-left: 102px;

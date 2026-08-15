@@ -4,8 +4,9 @@
  * blur/frost (floating mode only), fluid color, background brightness, the
  * backdrop source picker, and the wallpaper picker with its two knobs. Every
  * write goes straight through to the layer, so the skin moves live. The
- * master on/off switch stays in the Plugins section; when it is off the row
- * dims and explains where to find it.
+ * controls follow the Appearance cubes directly (no row title of their own),
+ * and the whole row renders nothing while the master switch in the Plugins
+ * section is off.
  */
 import { useRef } from 'react'
 import type { PropsLocale, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
@@ -72,12 +73,12 @@ export function AquaAppearanceRow(props: AquaAppearanceRowComponentProps) {
   const bgMax = dark ? 50 : 100
   const bgDisplay = Math.min(bgMax, Math.max(bgMin, bgBrightness))
 
+  // Off = the Plugins master switch is off: leave no trace in General.
+  if (!enabled) return null
+
   return (
     <div className={css.group}>
-      <div className={css.title}>{t('aqua.title')}</div>
-      {!enabled && <div className={css.disabledHint}>{t('aqua.disabledHint')}</div>}
-
-      <div className={enabled ? css.controls : `${css.controls} ${css.dim}`}>
+      <div className={css.controls}>
         <div className={css.row}>
           <span className={css.rowLabel}>{t('aqua.mode')}</span>
           <Segmented
@@ -119,24 +120,28 @@ export function AquaAppearanceRow(props: AquaAppearanceRowComponentProps) {
 
         {background === 'wallpaper' && (
           <>
-            <div className={css.wallpaperPick}>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                className={css.fileInput}
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file !== undefined) {
-                    void fileToDataUrl(file).then(setWallpaper)
-                  }
-                  e.target.value = ''
-                }}
-              />
-              <button type="button" className={css.pickButton} onClick={() => { fileRef.current?.click() }}>
-                {t('aqua.chooseWallpaper')}
-              </button>
+            <div className={css.row}>
+              <span className={css.rowLabel}>{t('aqua.wallpaper')}</span>
+              <div className={css.wallpaperPick}>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className={css.fileInput}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file !== undefined) {
+                      void fileToDataUrl(file).then(setWallpaper)
+                    }
+                    e.target.value = ''
+                  }}
+                />
+                <button type="button" className={css.pickButton} onClick={() => { fileRef.current?.click() }}>
+                  {t('aqua.chooseWallpaper')}
+                </button>
+              </div>
             </div>
+            <div className={css.knobHint}>{t('aqua.wallpaperHint')}</div>
             <Knob label={t('aqua.wallpaperBlur')} value={wallpaperBlur} min={0} max={40} step={0.5} unit="px" onChange={setWallpaperBlur} />
             <Knob label={t('aqua.wallpaperFrost')} value={wallpaperFrost} min={0} max={100} step={1} unit="%" onChange={setWallpaperFrost} />
           </>

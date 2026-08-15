@@ -45,4 +45,4 @@ then append to `$DSH_HOME/profiles/web/cordis.patch.yml`:
       name: '@deepseek-ai/dsh-client-ui-aqua'
 ```
 
-Reload the web UI. Aqua is **on by default**; the master switch lives in **Settings → Plugins → Glass theme** (same shape as the other plugin cards), and every other control sits directly under **Settings → General → Appearance**.
+Reload the web UI. Aqua is **on by default**; the master switch lives in **Settings → Plugins → Glass theme** (same shape as the other plugin cards), and every other control sits directly under **Settings → General → Appearance** (no title of its own). With the master switch off, the whole control block under Appearance is hidden.
