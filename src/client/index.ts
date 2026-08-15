@@ -1,16 +1,23 @@
 /**
- * Aqua client plugin body: the toggleable deep-sea skin. Owns the durable
+ * Aqua client plugin body: the toggleable glassmorphism skin. Owns the durable
  * enable flag (localStorage), applies/retracts the theme layer through
- * {@link AquaLayer}, and registers its on/off card into the Plugins settings
- * section (configurable tab) — one click returns the stock UI (every layer
- * is an effect, disposed on flip).
+ * {@link AquaLayer}, and registers two settings surfaces:
+ * - the master on/off card into the Plugins section (`settings.plugin.item`,
+ *   same shape as the other plugin cards);
+ * - every glass knob into the General section's Appearance row area
+ *   (`settings.general.item`, right under 外观).
+ * One click on the master switch returns the stock UI (every layer is an
+ * effect, disposed on flip).
  */
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { BoundActions } from '@deepseek-ai/dsh-client-ui-slots'
 // Type-only: pulls the `settings.plugin.item` SlotMap merge.
 import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
+// Type-only: pulls the `settings.general.item` SlotMap merge.
+import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { AquaPluginCard, type AquaPluginCardInjected } from './AquaPluginCard.tsx'
-import { createAquaRowStore } from './settings-store.ts'
+import { AquaAppearanceRow, type AquaAppearanceRowInjected } from './AquaAppearanceRow.tsx'
+import { createAquaRowStore, type AquaSettingsPayload } from './settings-store.ts'
 import { en, NS, zh } from './locales.ts'
 import { AquaLayer } from './theme-layer.ts'
 // Side-effect imports: the theme-layer stylesheet (unloaded with the plugin)
@@ -26,18 +33,22 @@ export const inject = ['theme', 'slots', 'locale']
  * @param ctx - client cordis context.
  */
 export function apply(ctx: ClientContext): void {
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-aqua: settings card dictionaries')
+  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-aqua: settings dictionaries')
 
-  // The layer owns its lifecycle: enable flag, token stack, CSS attribute,
-  // and the greeting observer are all effects released on disable/dispose.
+  // The layer owns its lifecycle: enable flag, token stack, and CSS attribute
+  // are all effects released on disable/dispose.
   const layer = new AquaLayer(ctx)
 
-  const store = createAquaRowStore()
-  let bound: BoundActions<typeof store> | undefined
+  // Two store mirrors of the same layer state: one for the Plugins card
+  // (master switch) and one for the General section's Appearance row (knobs).
+  const pluginStore = createAquaRowStore()
+  const appearanceStore = createAquaRowStore()
+  let pluginBound: BoundActions<typeof pluginStore> | undefined
+  let appearanceBound: BoundActions<typeof appearanceStore> | undefined
   let revision = 0
-  const sync = (): void => {
+  const payload = (): AquaSettingsPayload => {
     const s = layer.getSettings()
-    bound?.sync({
+    return {
       enabled: layer.getEnabled(),
       mode: s.mode,
       blur: s.blur,
@@ -48,11 +59,17 @@ export function apply(ctx: ClientContext): void {
       wallpaper: s.wallpaper,
       wallpaperBlur: s.wallpaperBlur,
       wallpaperFrost: s.wallpaperFrost,
-    }, revision)
+    }
+  }
+  const sync = (): void => {
+    const next = payload()
+    pluginBound?.sync(next, revision)
+    appearanceBound?.sync(next, revision)
     revision += 1
   }
-  const injected = (actions: BoundActions<typeof store>): AquaPluginCardInjected => {
-    bound = actions
+
+  const pluginInjected = (actions: BoundActions<typeof pluginStore>): AquaPluginCardInjected => {
+    pluginBound = actions
     // Re-sync from the layer so no flip is lost between registration and
     // first render (the store's revision guard drops stale duplicates).
     sync()
@@ -61,6 +78,12 @@ export function apply(ctx: ClientContext): void {
         layer.setEnabled(enabled)
         sync()
       },
+    }
+  }
+  const appearanceInjected = (actions: BoundActions<typeof appearanceStore>): AquaAppearanceRowInjected => {
+    appearanceBound = actions
+    sync()
+    return {
       setMode: (mode) => {
         layer.setMode(mode)
         sync()
@@ -99,12 +122,24 @@ export function apply(ctx: ClientContext): void {
       },
     }
   }
+
+  // Master switch card in the Plugins configurable tab.
   ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
     name: 'settings.plugin.item',
     id: 'aqua',
     order: 5,
-    store,
+    store: pluginStore,
     locale: NS,
-    inject: injected,
+    inject: pluginInjected,
   }, AquaPluginCard))
+
+  // Glass knobs row in the General section, directly under Appearance (10).
+  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+    name: 'settings.general.item',
+    id: 'aqua',
+    order: 11,
+    store: appearanceStore,
+    locale: NS,
+    inject: appearanceInjected,
+  }, AquaAppearanceRow))
 }
