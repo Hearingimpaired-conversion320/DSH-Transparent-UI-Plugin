@@ -17,7 +17,6 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import { ensureAmbientScene, removeAmbientScene } from './critters.ts'
 import { attachFluidShader, SITE_FLUID_PARAMS, type FluidParams, type FluidShaderHandle } from './fluid-shader.ts'
 import { attachFluidInteractions } from './fluid-interactions.ts'
-import { aquaPlaceholder, pickGreeting, resetHeroCopy } from './greetings.ts'
 import { startSeamStamper } from './seam-stamper.ts'
 
 /** html attribute selecting the Aqua layer: CSS hooks and ambient effects. */
@@ -186,36 +185,95 @@ export interface AquaSettings {
   frost: number
   /** Fluid hue shift, degrees. */
   fluidHue: number
+  /** Backdrop source: the living fluid board or a custom wallpaper. */
+  background: 'fluid' | 'wallpaper'
+  /** Wallpaper image data URL (empty until one is picked). */
+  wallpaper: string
+  /** Wallpaper blur radius, px. */
+  wallpaperBlur: number
+  /** Wallpaper frost veil, 0-100. */
+  wallpaperFrost: number
 }
 
-const SETTINGS_DEFAULTS: AquaSettings = { blur: 2, frost: 20, fluidHue: 316 }
-const SETTINGS_KEYS = {
+const SETTINGS_DEFAULTS: AquaSettings = {
+  blur: 2,
+  frost: 20,
+  fluidHue: 316,
+  background: 'fluid',
+  wallpaper: '',
+  wallpaperBlur: 0,
+  wallpaperFrost: 0,
+}
+
+/** Numeric knob keys and their localStorage names. */
+const NUMERIC_KEYS = {
   blur: 'dsh.ui-aqua.blur',
   frost: 'dsh.ui-aqua.frost',
   fluidHue: 'dsh.ui-aqua.fluidHue',
+  wallpaperBlur: 'dsh.ui-aqua.wallpaperBlur',
+  wallpaperFrost: 'dsh.ui-aqua.wallpaperFrost',
 } as const
+type NumericKey = keyof typeof NUMERIC_KEYS
+
+const BACKGROUND_KEY = 'dsh.ui-aqua.background'
+const WALLPAPER_KEY = 'dsh.ui-aqua.wallpaper'
 
 /** Clamp a numeric knob into its sane range. */
-function clampSetting(key: keyof AquaSettings, value: number): number {
-  const min = key === 'blur' ? 0 : key === 'frost' ? 0 : 0
-  const max = key === 'blur' ? 40 : key === 'frost' ? 100 : 360
-  return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : SETTINGS_DEFAULTS[key]
+function clampSetting(key: NumericKey, value: number): number {
+  const max = key === 'blur' || key === 'wallpaperBlur' ? 40 : key === 'frost' || key === 'wallpaperFrost' ? 100 : 360
+  return Number.isFinite(value) ? Math.min(max, Math.max(0, value)) : SETTINGS_DEFAULTS[key]
 }
 
-/** Read one knob from localStorage (absent/parse failure means the default). */
-function readSetting(key: keyof AquaSettings): number {
+/** Read one numeric knob from localStorage (absent/parse failure means the default). */
+function readSetting(key: NumericKey): number {
   try {
-    const raw = localStorage.getItem(SETTINGS_KEYS[key])
+    const raw = localStorage.getItem(NUMERIC_KEYS[key])
     return raw === null ? SETTINGS_DEFAULTS[key] : clampSetting(key, Number(raw))
   } catch {
     return SETTINGS_DEFAULTS[key]
   }
 }
 
-/** Persist one knob (storage failures keep the in-memory state). */
-function writeSetting(key: keyof AquaSettings, value: number): void {
+/** Persist one numeric knob (storage failures keep the in-memory state). */
+function writeSetting(key: NumericKey, value: number): void {
   try {
-    localStorage.setItem(SETTINGS_KEYS[key], String(value))
+    localStorage.setItem(NUMERIC_KEYS[key], String(value))
+  } catch {
+    /* in-memory state still applies for this tab */
+  }
+}
+
+/** Read the backdrop source ('fluid' or 'wallpaper'). */
+function readBackground(): 'fluid' | 'wallpaper' {
+  try {
+    return localStorage.getItem(BACKGROUND_KEY) === 'wallpaper' ? 'wallpaper' : 'fluid'
+  } catch {
+    return 'fluid'
+  }
+}
+
+/** Persist the backdrop source. */
+function writeBackground(value: 'fluid' | 'wallpaper'): void {
+  try {
+    localStorage.setItem(BACKGROUND_KEY, value)
+  } catch {
+    /* in-memory state still applies */
+  }
+}
+
+/** Read the wallpaper data URL (absent/oversized means empty). */
+function readWallpaper(): string {
+  try {
+    return localStorage.getItem(WALLPAPER_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+/** Persist the wallpaper data URL (quota failures keep it in memory only). */
+function writeWallpaper(value: string): void {
+  try {
+    localStorage.setItem(WALLPAPER_KEY, value)
   } catch {
     /* in-memory state still applies for this tab */
   }
@@ -260,7 +318,6 @@ export class AquaLayer {
   private mainFluid: FluidShaderHandle | undefined
   private interactionDisposer: (() => void) | undefined
   private themeListener: (() => void) | undefined
-  private observer: MutationObserver | undefined
   private seamDisposer: (() => void) | undefined
   private readonly ctx: Context
 
@@ -275,10 +332,9 @@ export class AquaLayer {
           this.enabled = readEnabled()
           this.sync()
         }
-        if (event.key === SETTINGS_KEYS.blur || event.key === SETTINGS_KEYS.frost || event.key === SETTINGS_KEYS.fluidHue) {
-          this.settings.blur = readSetting('blur')
-          this.settings.frost = readSetting('frost')
-          this.settings.fluidHue = readSetting('fluidHue')
+        const key = event.key
+        if (key !== null && (key in NUMERIC_KEYS || key === BACKGROUND_KEY || key === WALLPAPER_KEY)) {
+          this.reloadSettings()
           if (this.enabled) this.applySettings()
         }
       }
@@ -289,11 +345,7 @@ export class AquaLayer {
       }
     }, 'ui-aqua: layer lifecycle')
     this.enabled = readEnabled()
-    this.settings = {
-      blur: readSetting('blur'),
-      frost: readSetting('frost'),
-      fluidHue: readSetting('fluidHue'),
-    }
+    this.reloadSettings()
     this.sync()
   }
 
@@ -305,6 +357,19 @@ export class AquaLayer {
   /** Current knob values (the settings row mirrors these). */
   getSettings(): AquaSettings {
     return { ...this.settings }
+  }
+
+  /** Re-read every knob from localStorage into memory. */
+  private reloadSettings(): void {
+    this.settings = {
+      blur: readSetting('blur'),
+      frost: readSetting('frost'),
+      fluidHue: readSetting('fluidHue'),
+      background: readBackground(),
+      wallpaper: readWallpaper(),
+      wallpaperBlur: readSetting('wallpaperBlur'),
+      wallpaperFrost: readSetting('wallpaperFrost'),
+    }
   }
 
   /** Flip the layer: persist, then apply or retract every owned effect. */
@@ -342,9 +407,37 @@ export class AquaLayer {
     if (this.enabled) this.applySettings()
   }
 
-  /** Active locale id for greeting / placeholder copy. */
-  private locale(): string {
-    return this.ctx.locale.getLocale().active
+  /** Set the backdrop source (fluid board or custom wallpaper). */
+  setBackground(value: 'fluid' | 'wallpaper'): void {
+    if (value === this.settings.background) return
+    this.settings.background = value
+    writeBackground(value)
+    if (this.enabled) this.applySettings()
+  }
+
+  /** Set the wallpaper image (a data URL; empty clears it). */
+  setWallpaper(value: string): void {
+    this.settings.wallpaper = value
+    writeWallpaper(value)
+    if (this.enabled) this.applySettings()
+  }
+
+  /** Set the wallpaper blur radius (px). */
+  setWallpaperBlur(value: number): void {
+    const next = clampSetting('wallpaperBlur', value)
+    if (next === this.settings.wallpaperBlur) return
+    this.settings.wallpaperBlur = next
+    writeSetting('wallpaperBlur', next)
+    if (this.enabled) this.applySettings()
+  }
+
+  /** Set the wallpaper frost veil (0-100). */
+  setWallpaperFrost(value: number): void {
+    const next = clampSetting('wallpaperFrost', value)
+    if (next === this.settings.wallpaperFrost) return
+    this.settings.wallpaperFrost = next
+    writeSetting('wallpaperFrost', next)
+    if (this.enabled) this.applySettings()
   }
 
   private sync(): void {
@@ -362,16 +455,29 @@ export class AquaLayer {
     // navy).
     style.setProperty('--dsh-aqua-frost', String(Math.min(this.settings.frost / 50, 1.4)))
     style.setProperty('--dsh-aqua-fluid-hue', `${this.settings.fluidHue}deg`)
+    style.setProperty('--dsh-aqua-wallpaper-blur', `${this.settings.wallpaperBlur}px`)
+    style.setProperty('--dsh-aqua-wallpaper-frost', String(this.settings.wallpaperFrost / 100))
+
+    // Backdrop source: flip the ambient container between fluid and wallpaper.
+    const ambient = document.querySelector<HTMLElement>('[data-dsh-aqua-ambient]')
+    if (ambient !== null) ambient.dataset.background = this.settings.background
+    const img = document.querySelector<HTMLImageElement>('[data-dsh-aqua-wallpaper-img]')
+    if (img !== null) {
+      if (this.settings.background === 'wallpaper' && this.settings.wallpaper !== '') {
+        img.src = this.settings.wallpaper
+      } else {
+        img.removeAttribute('src')
+      }
+    }
   }
 
   private mount(): void {
     document.documentElement.setAttribute(AQUA_ATTRIBUTE, '')
+    ensureAmbientScene()
     this.applySettings()
     this.tokenDisposer = this.ctx.theme.overrideTokens(OVERRIDE_SOURCE, AQUA_TOKEN_OVERRIDES)
-    ensureAmbientScene()
     this.mountFluid()
     this.startSeamStamper()
-    this.startObserver()
   }
 
   private unmount(): void {
@@ -380,10 +486,8 @@ export class AquaLayer {
     this.tokenDisposer = undefined
     this.teardownFluid()
     removeAmbientScene()
-    this.stopObserver()
     this.seamDisposer?.()
     this.seamDisposer = undefined
-    resetHeroCopy(this.locale())
   }
 
   /** Attach the fluid shader and the interaction feeds. */
@@ -418,42 +522,9 @@ export class AquaLayer {
     this.mainFluid?.setParams(this.fluidParams())
   }
 
-  /**
-   * Decorate hero mounts as they appear: random greeting per new blank
-   * session, Aqua placeholder on the hero composer.
-   * @param root - added element to scan.
-   */
-  private decorate(root: Element): void {
-    const headline = root.matches('[data-hero-headline]')
-      ? root
-      : root.querySelector('[data-hero-headline]')
-    if (headline !== null) headline.textContent = pickGreeting(this.locale())
-    const textarea = document.querySelector<HTMLTextAreaElement>('[data-phase="hero"] textarea')
-    if (textarea !== null) textarea.setAttribute('placeholder', aquaPlaceholder(this.locale()))
-  }
-
   /** Stamp the data-* seams the stylesheet keys off (self-contained mode). */
   private startSeamStamper(): void {
     if (this.seamDisposer !== undefined) return
     this.seamDisposer = startSeamStamper()
-  }
-
-  private startObserver(): void {
-    const observer = new MutationObserver((records) => {
-      for (const record of records) {
-        for (const node of record.addedNodes) {
-          if (node instanceof Element) this.decorate(node)
-        }
-      }
-    })
-    observer.observe(document.body, { childList: true, subtree: true })
-    // Decorate a hero already mounted (layer enabled mid-session).
-    for (const node of document.querySelectorAll('[data-hero-headline]')) this.decorate(node)
-    this.observer = observer
-  }
-
-  private stopObserver(): void {
-    this.observer?.disconnect()
-    this.observer = undefined
   }
 }

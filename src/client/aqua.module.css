@@ -126,6 +126,44 @@
   filter: hue-rotate(var(--dsh-aqua-fluid-hue, 0deg));
 }
 
+/* Custom wallpaper: the backdrop-source knob swaps the fluid board for an
+   image. `object-fit: cover` fills the page while preserving aspect ratio;
+   the blur and frost knobs ride --dsh-aqua-wallpaper-blur / -frost. */
+[data-dsh-aqua] [data-dsh-aqua-wallpaper] {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+[data-dsh-aqua] [data-dsh-aqua-wallpaper-img] {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(var(--dsh-aqua-wallpaper-blur, 0px));
+}
+
+/* Frost veil over the wallpaper (white in light, near-black in dark). */
+[data-dsh-aqua] [data-dsh-aqua-wallpaper]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(255 255 255 / var(--dsh-aqua-wallpaper-frost, 0));
+  pointer-events: none;
+}
+
+[data-dsh-aqua] body[data-ds-dark-theme] [data-dsh-aqua-wallpaper]::after {
+  background: rgb(12 18 27 / var(--dsh-aqua-wallpaper-frost, 0));
+}
+
+/* Backdrop source: hide whichever board is not the active one. */
+[data-dsh-aqua] [data-dsh-aqua-ambient][data-background='wallpaper'] [data-dsh-aqua-fluid-canvas] {
+  display: none;
+}
+
+[data-dsh-aqua] [data-dsh-aqua-ambient][data-background='fluid'] [data-dsh-aqua-wallpaper] {
+  display: none;
+}
+
 /* Marine life: brand-fish silhouettes, shrimp, bubbles, plankton. Positions,
    sizes, and per-critter timing arrive inline from the plugin markup. */
 [data-dsh-aqua] [data-aqua-critter] {

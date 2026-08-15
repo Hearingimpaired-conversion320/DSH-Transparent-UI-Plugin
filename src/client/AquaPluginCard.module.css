@@ -136,3 +136,77 @@
   line-height: 18px;
   color: var(--dsw-alias-label-tertiary);
 }
+
+/* Backdrop source row: a label plus a fluid/wallpaper segmented control. */
+.backdropRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dsw-alias-border-l1);
+}
+
+.backdropLabel {
+  flex: none;
+  width: 92px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.seg,
+.segActive {
+  height: 26px;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.seg + .seg,
+.segActive + .seg,
+.seg + .segActive {
+  border-left: 1px solid var(--dsw-alias-border-l2);
+}
+
+.segActive {
+  background: var(--dsw-alias-state-business-tertiary);
+  color: var(--dsw-alias-state-business-primary);
+}
+
+/* Wallpaper picker: hidden file input + a ghost button. */
+.wallpaperPick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fileInput {
+  display: none;
+}
+
+.pickButton {
+  height: 26px;
+  padding: 0 12px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  background: transparent;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-primary);
+  cursor: pointer;
+}
+
+.pickButton:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}

@@ -71,6 +71,7 @@ function plankton(style: string): string {
  */
 export const AMBIENT_SCENE = [
   '<canvas data-dsh-aqua-fluid-canvas></canvas>',
+  '<div data-dsh-aqua-wallpaper><img data-dsh-aqua-wallpaper-img alt=""></div>',
   fish('top:22%;left:58%;animation-duration:9s', 30),
   fishLeft('top:36%;left:10%;animation-duration:14s;animation-delay:-4s', 20),
   fish('top:64%;left:76%;animation-duration:19s;animation-delay:-9s;opacity:0.55', 14),

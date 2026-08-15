@@ -37,7 +37,16 @@ export function apply(ctx: ClientContext): void {
   let revision = 0
   const sync = (): void => {
     const s = layer.getSettings()
-    bound?.sync({ enabled: layer.getEnabled(), blur: s.blur, frost: s.frost, fluidHue: s.fluidHue }, revision)
+    bound?.sync({
+      enabled: layer.getEnabled(),
+      blur: s.blur,
+      frost: s.frost,
+      fluidHue: s.fluidHue,
+      background: s.background,
+      wallpaper: s.wallpaper,
+      wallpaperBlur: s.wallpaperBlur,
+      wallpaperFrost: s.wallpaperFrost,
+    }, revision)
     revision += 1
   }
   const injected = (actions: BoundActions<typeof store>): AquaPluginCardInjected => {
@@ -60,6 +69,22 @@ export function apply(ctx: ClientContext): void {
       },
       setFluidHue: (fluidHue) => {
         layer.setFluidHue(fluidHue)
+        sync()
+      },
+      setBackground: (background) => {
+        layer.setBackground(background)
+        sync()
+      },
+      setWallpaper: (wallpaper) => {
+        layer.setWallpaper(wallpaper)
+        sync()
+      },
+      setWallpaperBlur: (wallpaperBlur) => {
+        layer.setWallpaperBlur(wallpaperBlur)
+        sync()
+      },
+      setWallpaperFrost: (wallpaperFrost) => {
+        layer.setWallpaperFrost(wallpaperFrost)
         sync()
       },
     }
