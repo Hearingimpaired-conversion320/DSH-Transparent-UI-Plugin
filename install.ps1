@@ -14,6 +14,7 @@
 
 param(
     [string]$Source = 'https://github.com/WYH66666666/DSH-Transparent-UI-Plugin',
+    [string]$Version = 'v1.0.0',
     [string]$DshHome = $env:DSH_HOME,
     [string]$Profile = 'web'
 )
@@ -41,14 +42,14 @@ if ($isRemote) {
     $useGit = $null -ne (Get-Command git -ErrorAction SilentlyContinue)
     if ($useGit) {
         if (Test-Path $cloneDir) { Remove-Item $cloneDir -Recurse -Force }
-        git clone $repoUrl $cloneDir | Out-Host
+        git clone --depth 1 --branch $Version $repoUrl $cloneDir | Out-Host
         if ($LASTEXITCODE -ne 0) {
             Write-Host '  git clone failed, falling back to zip download...' -ForegroundColor Yellow
             $useGit = $false
         }
     }
     if (-not $useGit) {
-        $zipUrl    = "$repoUrl/archive/refs/heads/main.zip"
+        $zipUrl    = "$repoUrl/archive/refs/tags/$Version.zip"
         $zipFile   = Join-Path $pluginsDir 'aqua-plugin.zip'
         $extractDir = Join-Path $pluginsDir 'aqua-plugin-extract'
         New-Item -ItemType Directory -Force -Path $pluginsDir | Out-Null
