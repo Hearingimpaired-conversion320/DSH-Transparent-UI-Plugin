@@ -1,4 +1,4 @@
-﻿# Aqua installer (Windows) - no npm, no build, no account, no git required.
+# Aqua installer (Windows) - no npm, no build, no account, no git required.
 #
 # One command (from any directory):
 #   powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'https://github.com/WYH66666666/DSH-Transparent-UI-Plugin/raw/main/install.ps1' -OutFile install.ps1; .\install.ps1"
@@ -62,21 +62,16 @@ if ($isRemote) {
         }
     }
 
-    $useGit = $null -ne (Get-Command git -ErrorAction SilentlyContinue)
-    if ($useGit) {
-        if (Test-Path $cloneDir) { Remove-Item $cloneDir -Recurse -Force }
-        git clone --depth 1 --branch $ref $repoUrl $cloneDir | Out-Host
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host '  git clone failed, falling back to zip download...' -ForegroundColor Yellow
-            $useGit = $false
-        }
-    }
-    if (-not $useGit) {
-        $refKind  = if ($isTag) { 'tags' } else { 'heads' }
-        $zipUrl   = "$repoUrl/archive/refs/$refKind/$ref.zip"
-        $zipFile   = Join-Path $pluginsDir 'aqua-plugin.zip'
-        $extractDir = Join-Path $pluginsDir 'aqua-plugin-extract'
-        New-Item -ItemType Directory -Force -Path $pluginsDir | Out-Null
+    # Zip first: plain HTTP is faster and more reliable than the git protocol
+    # (the latter often stalls on flaky connections). git is only a fallback.
+    $refKind  = if ($isTag) { 'tags' } else { 'heads' }
+    $zipUrl   = "$repoUrl/archive/refs/$refKind/$ref.zip"
+    $zipFile  = Join-Path $pluginsDir 'aqua-plugin.zip'
+    $extractDir = Join-Path $pluginsDir 'aqua-plugin-extract'
+    New-Item -ItemType Directory -Force -Path $pluginsDir | Out-Null
+
+    $gotSource = $false
+    try {
         Write-Host "  downloading $zipUrl"
         Invoke-WebRequest $zipUrl -OutFile $zipFile -UseBasicParsing
         if (Test-Path $extractDir) { Remove-Item $extractDir -Recurse -Force }
@@ -89,6 +84,17 @@ if ($isRemote) {
         New-Item -ItemType Directory -Force -Path (Split-Path $cloneDir -Parent) | Out-Null
         Move-Item $inner.FullName $cloneDir
         Remove-Item $zipFile -Force
+        $gotSource = $true
+    } catch {
+        Write-Host '  zip download failed, trying git clone...' -ForegroundColor Yellow
+    }
+
+    if (-not $gotSource) {
+        $useGit = $null -ne (Get-Command git -ErrorAction SilentlyContinue)
+        if (-not $useGit) { throw 'download failed (zip and git both unavailable)' }
+        if (Test-Path $cloneDir) { Remove-Item $cloneDir -Recurse -Force }
+        git clone --depth 1 --branch $ref $repoUrl $cloneDir | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "git clone failed for $repoUrl ($ref)" }
     }
     $src = $cloneDir
 } else {

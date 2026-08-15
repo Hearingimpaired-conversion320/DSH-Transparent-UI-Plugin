@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.3
+
+- 安装器改为**优先 zip 下载**（普通 HTTP 更快更稳），git clone 只作后备——git 连 GitHub 不稳时不再白等十几秒
+
 ## v1.0.2
 
 - 安装脚本默认安装**最新发布版**（通过 GitHub API 解析，可 `-Version 'v1.0.1'` 指定版本或 `-Version 'main'` 跟随开发分支）
