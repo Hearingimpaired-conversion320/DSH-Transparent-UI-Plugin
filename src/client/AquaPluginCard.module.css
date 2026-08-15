@@ -1,15 +1,22 @@
 /* Aqua plugin card: one list item in the Plugins configurable tab — same
- * shell language as the shipped plugin cards (pad, hairline border). */
+ * shell language as the shipped plugin cards (pad, hairline border), plus a
+ * knob panel for the live glass / fluid tweaks. */
 
 .card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  gap: 12px;
   padding: 16px;
   border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 12px;
   background: var(--dsw-alias-bg-layer-1);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .text {
@@ -65,4 +72,67 @@
   justify-content: center;
   width: 16px;
   height: 16px;
+}
+
+/* Knob panel: three slider + number rows under a hairline. */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dsw-alias-border-l1);
+}
+
+.knob {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.knobLabel {
+  flex: none;
+  width: 92px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.slider {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--dsw-alias-state-business-primary);
+}
+
+.numberWrap {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.number {
+  width: 56px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-2);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-primary);
+  text-align: right;
+}
+
+.number::-webkit-outer-spin-button,
+.number::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.unit {
+  flex: none;
+  width: 18px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
 }

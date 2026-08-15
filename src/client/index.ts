@@ -35,19 +35,32 @@ export function apply(ctx: ClientContext): void {
   const store = createAquaRowStore()
   let bound: BoundActions<typeof store> | undefined
   let revision = 0
-  const sync = (enabled: boolean): void => {
-    bound?.sync(enabled, revision)
+  const sync = (): void => {
+    const s = layer.getSettings()
+    bound?.sync({ enabled: layer.getEnabled(), blur: s.blur, frost: s.frost, fluidHue: s.fluidHue }, revision)
     revision += 1
   }
   const injected = (actions: BoundActions<typeof store>): AquaPluginCardInjected => {
     bound = actions
     // Re-sync from the layer so no flip is lost between registration and
     // first render (the store's revision guard drops stale duplicates).
-    sync(layer.getEnabled())
+    sync()
     return {
       setEnabled: (enabled) => {
         layer.setEnabled(enabled)
-        sync(enabled)
+        sync()
+      },
+      setBlur: (blur) => {
+        layer.setBlur(blur)
+        sync()
+      },
+      setFrost: (frost) => {
+        layer.setFrost(frost)
+        sync()
+      },
+      setFluidHue: (fluidHue) => {
+        layer.setFluidHue(fluidHue)
+        sync()
       },
     }
   }

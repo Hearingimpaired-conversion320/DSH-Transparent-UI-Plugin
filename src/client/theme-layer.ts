@@ -178,6 +178,49 @@ function writeEnabled(value: boolean): void {
   }
 }
 
+/** Tunable layer knobs, persisted independently of the enable flag. */
+export interface AquaSettings {
+  /** Glass backdrop blur radius, px. */
+  blur: number
+  /** Glass fill opacity, 0-100 (50 = the shipped look; drives the frost multiplier). */
+  frost: number
+  /** Fluid hue shift, degrees. */
+  fluidHue: number
+}
+
+const SETTINGS_DEFAULTS: AquaSettings = { blur: 2, frost: 20, fluidHue: 316 }
+const SETTINGS_KEYS = {
+  blur: 'dsh.ui-aqua.blur',
+  frost: 'dsh.ui-aqua.frost',
+  fluidHue: 'dsh.ui-aqua.fluidHue',
+} as const
+
+/** Clamp a numeric knob into its sane range. */
+function clampSetting(key: keyof AquaSettings, value: number): number {
+  const min = key === 'blur' ? 0 : key === 'frost' ? 0 : 0
+  const max = key === 'blur' ? 40 : key === 'frost' ? 100 : 360
+  return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : SETTINGS_DEFAULTS[key]
+}
+
+/** Read one knob from localStorage (absent/parse failure means the default). */
+function readSetting(key: keyof AquaSettings): number {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEYS[key])
+    return raw === null ? SETTINGS_DEFAULTS[key] : clampSetting(key, Number(raw))
+  } catch {
+    return SETTINGS_DEFAULTS[key]
+  }
+}
+
+/** Persist one knob (storage failures keep the in-memory state). */
+function writeSetting(key: keyof AquaSettings, value: number): void {
+  try {
+    localStorage.setItem(SETTINGS_KEYS[key], String(value))
+  } catch {
+    /* in-memory state still applies for this tab */
+  }
+}
+
 /** Fluid palettes: one unified full-screen water. Dark inverts the official
  *  light look with luminous accent cores; light keeps strong blue contrast. */
 const FLUID_PALETTES: Record<'light' | 'dark', FluidParams> = {
@@ -212,6 +255,7 @@ function activeScheme(): 'light' | 'dark' {
  */
 export class AquaLayer {
   private enabled = false
+  private settings: AquaSettings = { ...SETTINGS_DEFAULTS }
   private tokenDisposer: (() => void) | undefined
   private mainFluid: FluidShaderHandle | undefined
   private interactionDisposer: (() => void) | undefined
@@ -231,6 +275,12 @@ export class AquaLayer {
           this.enabled = readEnabled()
           this.sync()
         }
+        if (event.key === SETTINGS_KEYS.blur || event.key === SETTINGS_KEYS.frost || event.key === SETTINGS_KEYS.fluidHue) {
+          this.settings.blur = readSetting('blur')
+          this.settings.frost = readSetting('frost')
+          this.settings.fluidHue = readSetting('fluidHue')
+          if (this.enabled) this.applySettings()
+        }
       }
       window.addEventListener('storage', onStorage)
       return () => {
@@ -239,6 +289,11 @@ export class AquaLayer {
       }
     }, 'ui-aqua: layer lifecycle')
     this.enabled = readEnabled()
+    this.settings = {
+      blur: readSetting('blur'),
+      frost: readSetting('frost'),
+      fluidHue: readSetting('fluidHue'),
+    }
     this.sync()
   }
 
@@ -247,12 +302,44 @@ export class AquaLayer {
     return this.enabled
   }
 
+  /** Current knob values (the settings row mirrors these). */
+  getSettings(): AquaSettings {
+    return { ...this.settings }
+  }
+
   /** Flip the layer: persist, then apply or retract every owned effect. */
   setEnabled(value: boolean): void {
     if (value === this.enabled) return
     this.enabled = value
     writeEnabled(value)
     this.sync()
+  }
+
+  /** Set the glass blur radius (px). */
+  setBlur(value: number): void {
+    const next = clampSetting('blur', value)
+    if (next === this.settings.blur) return
+    this.settings.blur = next
+    writeSetting('blur', next)
+    if (this.enabled) this.applySettings()
+  }
+
+  /** Set the glass frost amount (0-100). */
+  setFrost(value: number): void {
+    const next = clampSetting('frost', value)
+    if (next === this.settings.frost) return
+    this.settings.frost = next
+    writeSetting('frost', next)
+    if (this.enabled) this.applySettings()
+  }
+
+  /** Set the fluid hue shift (degrees). */
+  setFluidHue(value: number): void {
+    const next = clampSetting('fluidHue', value)
+    if (next === this.settings.fluidHue) return
+    this.settings.fluidHue = next
+    writeSetting('fluidHue', next)
+    if (this.enabled) this.applySettings()
   }
 
   /** Active locale id for greeting / placeholder copy. */
@@ -265,8 +352,21 @@ export class AquaLayer {
     else this.unmount()
   }
 
+  /** Write the knob-driven CSS variables onto <html>. */
+  private applySettings(): void {
+    const style = document.documentElement.style
+    style.setProperty('--dsh-aqua-blur', `${this.settings.blur}px`)
+    // Frost 0-100 → a 0-1.4 alpha multiplier (50 = 1x). Capped so max frost
+    // stays translucent frosted glass instead of collapsing to a solid
+    // opaque slab (the dark card would otherwise hit 100% and read as solid
+    // navy).
+    style.setProperty('--dsh-aqua-frost', String(Math.min(this.settings.frost / 50, 1.4)))
+    style.setProperty('--dsh-aqua-fluid-hue', `${this.settings.fluidHue}deg`)
+  }
+
   private mount(): void {
     document.documentElement.setAttribute(AQUA_ATTRIBUTE, '')
+    this.applySettings()
     this.tokenDisposer = this.ctx.theme.overrideTokens(OVERRIDE_SOURCE, AQUA_TOKEN_OVERRIDES)
     ensureAmbientScene()
     this.mountFluid()

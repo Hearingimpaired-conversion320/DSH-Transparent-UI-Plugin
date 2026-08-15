@@ -1,7 +1,7 @@
 /**
- * Aqua row slot store: a mirror of the layer enable flag. The plugin's
- * apply-world change listener is the only writer; the row component reads
- * via props.useStore.
+ * Aqua row slot store: a mirror of the layer's state (enable flag plus the
+ * three knobs). The plugin's apply-world change listener is the only writer;
+ * the row component reads via props.useStore.
  */
 import { defineStore, type EngineStoreHandle } from '@deepseek-ai/dsh-client-runtime/client'
 
@@ -9,13 +9,27 @@ import { defineStore, type EngineStoreHandle } from '@deepseek-ai/dsh-client-run
 export interface AquaRowState {
   /** Persisted layer enable flag. */
   enabled: boolean
+  /** Glass blur radius, px. */
+  blur: number
+  /** Glass frost amount, 0-100. */
+  frost: number
+  /** Fluid hue shift, degrees. */
+  fluidHue: number
   /** Monotonic revision; -1 until first sync so revision 0 lands as a change. */
   revision: number
 }
 
+/** The full payload the layer pushes into the row store on every change. */
+export interface AquaSettingsPayload {
+  enabled: boolean
+  blur: number
+  frost: number
+  fluidHue: number
+}
+
 /** Declared action shape giving the exported factory a stable return type. */
 type AquaRowActions = {
-  sync: (draft: AquaRowState, enabled: boolean, revision: number) => void
+  sync: (draft: AquaRowState, next: AquaSettingsPayload, revision: number) => void
 }
 
 /**
@@ -24,11 +38,14 @@ type AquaRowActions = {
  */
 export function createAquaRowStore(): EngineStoreHandle<AquaRowState, AquaRowActions> {
   return defineStore({
-    init: (): AquaRowState => ({ enabled: true, revision: -1 }),
+    init: (): AquaRowState => ({ enabled: true, blur: 2, frost: 20, fluidHue: 316, revision: -1 }),
     actions: {
-      sync: (d, enabled: boolean, revision: number) => {
+      sync: (d, next: AquaSettingsPayload, revision: number) => {
         if (revision <= d.revision) return
-        d.enabled = enabled
+        d.enabled = next.enabled
+        d.blur = next.blur
+        d.frost = next.frost
+        d.fluidHue = next.fluidHue
         d.revision = revision
       },
     },
