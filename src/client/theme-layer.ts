@@ -220,6 +220,8 @@ export interface AquaSettings {
   frost: number
   /** Fluid hue shift, degrees. */
   fluidHue: number
+  /** Background brightness, 0-100 (0 = pure black, 50 = transparent, 100 = pure white). */
+  bgBrightness: number
   /** Backdrop source: the living fluid board or a custom wallpaper. */
   background: 'fluid' | 'wallpaper'
   /** Wallpaper image data URL (empty until one is picked). */
@@ -235,6 +237,7 @@ const SETTINGS_DEFAULTS: AquaSettings = {
   blur: 2,
   frost: 20,
   fluidHue: 316,
+  bgBrightness: 50,
   background: 'fluid',
   wallpaper: '',
   wallpaperBlur: 0,
@@ -246,6 +249,7 @@ const NUMERIC_KEYS = {
   blur: 'dsh.ui-aqua.blur',
   frost: 'dsh.ui-aqua.frost',
   fluidHue: 'dsh.ui-aqua.fluidHue',
+  bgBrightness: 'dsh.ui-aqua.bgBrightness',
   wallpaperBlur: 'dsh.ui-aqua.wallpaperBlur',
   wallpaperFrost: 'dsh.ui-aqua.wallpaperFrost',
 } as const
@@ -257,7 +261,9 @@ const WALLPAPER_KEY = 'dsh.ui-aqua.wallpaper'
 
 /** Clamp a numeric knob into its sane range. */
 function clampSetting(key: NumericKey, value: number): number {
-  const max = key === 'blur' || key === 'wallpaperBlur' ? 40 : key === 'frost' || key === 'wallpaperFrost' ? 100 : 360
+  const max = key === 'blur' || key === 'wallpaperBlur' ? 40
+    : key === 'frost' || key === 'wallpaperFrost' || key === 'bgBrightness' ? 100
+      : 360
   return Number.isFinite(value) ? Math.min(max, Math.max(0, value)) : SETTINGS_DEFAULTS[key]
 }
 
@@ -421,6 +427,7 @@ export class AquaLayer {
       blur: readSetting('blur'),
       frost: readSetting('frost'),
       fluidHue: readSetting('fluidHue'),
+      bgBrightness: readSetting('bgBrightness'),
       background: readBackground(),
       wallpaper: readWallpaper(),
       wallpaperBlur: readSetting('wallpaperBlur'),
@@ -468,6 +475,15 @@ export class AquaLayer {
     if (next === this.settings.fluidHue) return
     this.settings.fluidHue = next
     writeSetting('fluidHue', next)
+    if (this.enabled) this.applySettings()
+  }
+
+  /** Set the background brightness (0-100: 0 = pure black, 50 = transparent, 100 = pure white). */
+  setBgBrightness(value: number): void {
+    const next = clampSetting('bgBrightness', value)
+    if (next === this.settings.bgBrightness) return
+    this.settings.bgBrightness = next
+    writeSetting('bgBrightness', next)
     if (this.enabled) this.applySettings()
   }
 
@@ -521,6 +537,10 @@ export class AquaLayer {
     style.setProperty('--dsh-aqua-fluid-hue', `${this.settings.fluidHue}deg`)
     style.setProperty('--dsh-aqua-wallpaper-blur', `${this.settings.wallpaperBlur}px`)
     style.setProperty('--dsh-aqua-wallpaper-frost', String(this.settings.wallpaperFrost / 100))
+    // Background brightness: below 50 fades toward pure black, above 50
+    // toward pure white, exactly 50 is transparent (no overlay).
+    style.setProperty('--dsh-aqua-brightness-black', String(Math.max(0, (50 - this.settings.bgBrightness) / 50)))
+    style.setProperty('--dsh-aqua-brightness-white', String(Math.max(0, (this.settings.bgBrightness - 50) / 50)))
 
     // Rendering mode: the float rules key off data-dsh-float; the compat
     // (generic glass) rules key off data-dsh-compat.

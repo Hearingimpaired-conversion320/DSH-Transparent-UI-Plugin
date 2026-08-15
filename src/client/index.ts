@@ -43,6 +43,7 @@ export function apply(ctx: ClientContext): void {
       blur: s.blur,
       frost: s.frost,
       fluidHue: s.fluidHue,
+      bgBrightness: s.bgBrightness,
       background: s.background,
       wallpaper: s.wallpaper,
       wallpaperBlur: s.wallpaperBlur,
@@ -74,6 +75,10 @@ export function apply(ctx: ClientContext): void {
       },
       setFluidHue: (fluidHue) => {
         layer.setFluidHue(fluidHue)
+        sync()
+      },
+      setBgBrightness: (bgBrightness) => {
+        layer.setBgBrightness(bgBrightness)
         sync()
       },
       setBackground: (background) => {

@@ -104,6 +104,22 @@
     radial-gradient(900px 420px at 50% 108%, rgba(94, 143, 224, 0.09), transparent 70%);
 }
 
+/* Background brightness knob: below 50 fades the backdrop toward pure black,
+   above 50 toward pure white; exactly 50 keeps both overlays transparent. */
+[data-dsh-aqua] [data-dsh-aqua-ambient]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, var(--dsh-aqua-brightness-black, 0));
+}
+
+[data-dsh-aqua] [data-dsh-aqua-ambient]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, var(--dsh-aqua-brightness-white, 0));
+}
+
 @media (prefers-reduced-motion: no-preference) {
   [data-dsh-aqua] [data-dsh-aqua-ambient] {
     animation: dsh-aqua-breathe 9s var(--ds-ease-in-out) infinite alternate;

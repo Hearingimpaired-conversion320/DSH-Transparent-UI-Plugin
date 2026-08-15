@@ -25,6 +25,8 @@ export interface AquaPluginCardInjected {
   setFrost: (value: number) => void
   /** Set the fluid hue shift, degrees. */
   setFluidHue: (value: number) => void
+  /** Set the background brightness, 0-100 (0 = black, 50 = transparent, 100 = white). */
+  setBgBrightness: (value: number) => void
   /** Set the backdrop source. */
   setBackground: (value: 'fluid' | 'wallpaper') => void
   /** Set the wallpaper image (a data URL). */
@@ -113,12 +115,13 @@ async function fileToDataUrl(file: File): Promise<string> {
  * @returns the card list item.
  */
 export function AquaPluginCard(props: AquaPluginCardComponentProps) {
-  const { t, setEnabled, setMode, setBlur, setFrost, setFluidHue, setBackground, setWallpaper, setWallpaperBlur, setWallpaperFrost, useStore } = props
+  const { t, setEnabled, setMode, setBlur, setFrost, setFluidHue, setBgBrightness, setBackground, setWallpaper, setWallpaperBlur, setWallpaperFrost, useStore } = props
   const enabled = useStore(s => s.enabled)
   const mode = useStore(s => s.mode)
   const blur = useStore(s => s.blur)
   const frost = useStore(s => s.frost)
   const fluidHue = useStore(s => s.fluidHue)
+  const bgBrightness = useStore(s => s.bgBrightness)
   const background = useStore(s => s.background)
   const wallpaperBlur = useStore(s => s.wallpaperBlur)
   const wallpaperFrost = useStore(s => s.wallpaperFrost)
@@ -175,6 +178,7 @@ export function AquaPluginCard(props: AquaPluginCardComponentProps) {
           </>
         )}
         <Knob label={t('aqua.fluidHue')} value={fluidHue} min={0} max={360} step={1} unit="°" onChange={setFluidHue} />
+        <Knob label={t('aqua.bgBrightness')} value={bgBrightness} min={0} max={100} step={1} unit="%" onChange={setBgBrightness} />
       </div>
 
       <div className={css.backdropRow}>

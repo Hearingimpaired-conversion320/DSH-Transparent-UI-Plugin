@@ -17,6 +17,8 @@ export interface AquaRowState {
   frost: number
   /** Fluid hue shift, degrees. */
   fluidHue: number
+  /** Background brightness, 0-100. */
+  bgBrightness: number
   /** Backdrop source: fluid board or custom wallpaper. */
   background: 'fluid' | 'wallpaper'
   /** Wallpaper image data URL. */
@@ -36,6 +38,7 @@ export interface AquaSettingsPayload {
   blur: number
   frost: number
   fluidHue: number
+  bgBrightness: number
   background: 'fluid' | 'wallpaper'
   wallpaper: string
   wallpaperBlur: number
@@ -59,6 +62,7 @@ export function createAquaRowStore(): EngineStoreHandle<AquaRowState, AquaRowAct
       blur: 2,
       frost: 20,
       fluidHue: 316,
+      bgBrightness: 50,
       background: 'fluid',
       wallpaper: '',
       wallpaperBlur: 0,
@@ -73,6 +77,7 @@ export function createAquaRowStore(): EngineStoreHandle<AquaRowState, AquaRowAct
         d.blur = next.blur
         d.frost = next.frost
         d.fluidHue = next.fluidHue
+        d.bgBrightness = next.bgBrightness
         d.background = next.background
         d.wallpaper = next.wallpaper
         d.wallpaperBlur = next.wallpaperBlur
