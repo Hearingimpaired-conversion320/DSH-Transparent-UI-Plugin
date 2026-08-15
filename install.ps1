@@ -1,7 +1,7 @@
 # Aqua installer (Windows) - no npm, no build, no account, no git required.
 #
 # One command (from any directory):
-#   powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'https://github.com/WYH66666666/DSH-Transparent-UI-Plugin/raw/main/install.ps1' -OutFile install.ps1; .\install.ps1"
+#   powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'https://github.com/WYH66666666/DSH/raw/main/install.ps1' -OutFile install.ps1; .\install.ps1"
 #
 # It does three things:
 #   1. get the repo (git clone, or plain zip download when git is missing)
@@ -13,7 +13,7 @@
 # local path to install another clone.
 
 param(
-    [string]$Source = 'https://github.com/WYH66666666/DSH-Transparent-UI-Plugin',
+    [string]$Source = 'https://github.com/WYH66666666/DSH',
     [string]$DshHome = $env:DSH_HOME,
     [string]$Profile = 'web'
 )
