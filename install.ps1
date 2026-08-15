@@ -1,4 +1,4 @@
-# Aqua installer (Windows) - no npm, no build, no account, no git required.
+﻿# Aqua installer (Windows) - no npm, no build, no account, no git required.
 #
 # One command (from any directory):
 #   powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'https://github.com/WYH66666666/DSH-Transparent-UI-Plugin/raw/main/install.ps1' -OutFile install.ps1; .\install.ps1"
@@ -8,13 +8,15 @@
 #   2. create a junction in the profile's node_modules
 #   3. register ui-aqua in cordis.patch.yml (idempotent - safe to re-run)
 #
-# Reload the Web UI afterwards. DSH home defaults to %USERPROFILE%\.dsh,
-# override with -DshHome. Repo defaults to the official one; pass a URL or
-# local path to install another clone.
+# Version: defaults to 'latest' (the newest GitHub Release, resolved via the
+# API). Pin a version with -Version 'v1.0.1', or track the dev branch with
+# -Version 'main'. Reload the Web UI afterwards. DSH home defaults to
+# %USERPROFILE%\.dsh, override with -DshHome. Repo defaults to the official
+# one; pass a URL or local path to install another clone.
 
 param(
     [string]$Source = 'https://github.com/WYH66666666/DSH-Transparent-UI-Plugin',
-    [string]$Version = 'v1.0.0',
+    [string]$Version = 'latest',
     [string]$DshHome = $env:DSH_HOME,
     [string]$Profile = 'web'
 )
@@ -39,17 +41,39 @@ Write-Host '[1/3] Getting plugin source...' -ForegroundColor Cyan
 $isRemote = $Source -match '^(https?://|git@|ssh://|github:)'
 if ($isRemote) {
     $repoUrl = $Source.TrimEnd('/').TrimEnd('.git')
+
+    # Resolve the ref: 'latest' -> the newest release tag via the GitHub API;
+    # a version-looking string (v1.2.3) is a tag; anything else is a branch.
+    $ref = $Version
+    $isTag = $ref -match '^v\d+\.\d+'
+    if ($ref -eq 'latest' -and $repoUrl -match '^https?://github\.com/([^/]+/[^/]+)') {
+        $slug = $Matches[1]
+        try {
+            $latest = Invoke-RestMethod -Uri "https://api.github.com/repos/$slug/releases/latest" -Headers @{ 'User-Agent' = 'dsh-aqua-installer' } -TimeoutSec 15
+            if ($latest.tag_name) {
+                $ref = $latest.tag_name
+                $isTag = $true
+                Write-Host "  最新版本: $ref" -ForegroundColor Cyan
+            }
+        } catch {
+            Write-Host '  (查询最新版本失败，回退到 main 分支)' -ForegroundColor Yellow
+            $ref = 'main'
+            $isTag = $false
+        }
+    }
+
     $useGit = $null -ne (Get-Command git -ErrorAction SilentlyContinue)
     if ($useGit) {
         if (Test-Path $cloneDir) { Remove-Item $cloneDir -Recurse -Force }
-        git clone --depth 1 --branch $Version $repoUrl $cloneDir | Out-Host
+        git clone --depth 1 --branch $ref $repoUrl $cloneDir | Out-Host
         if ($LASTEXITCODE -ne 0) {
             Write-Host '  git clone failed, falling back to zip download...' -ForegroundColor Yellow
             $useGit = $false
         }
     }
     if (-not $useGit) {
-        $zipUrl    = "$repoUrl/archive/refs/tags/$Version.zip"
+        $refKind  = if ($isTag) { 'tags' } else { 'heads' }
+        $zipUrl   = "$repoUrl/archive/refs/$refKind/$ref.zip"
         $zipFile   = Join-Path $pluginsDir 'aqua-plugin.zip'
         $extractDir = Join-Path $pluginsDir 'aqua-plugin-extract'
         New-Item -ItemType Directory -Force -Path $pluginsDir | Out-Null

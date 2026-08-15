@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.2
+
+- 安装脚本默认安装**最新发布版**（通过 GitHub API 解析，可 `-Version 'v1.0.1'` 指定版本或 `-Version 'main'` 跟随开发分支）
+- 修复安装脚本在 Windows PowerShell 下中文提示乱码（UTF-8 BOM）
+
 ## v1.0.1
 
 - 兼容模式新增「背景流体颜色」调节入口（颜色旋钮在两种模式下都可用）

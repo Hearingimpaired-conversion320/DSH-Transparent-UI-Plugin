@@ -21,12 +21,19 @@ Aqua 是一层高自由度的玻璃质感主题，套在 DeepSeek Harness 网页
 powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'https://github.com/WYH66666666/DSH-Transparent-UI-Plugin/raw/main/install.ps1' -OutFile install.ps1; .\install.ps1"
 ```
 
-安装好后刷新 Web 界面即可。
+默认安装**最新发布版**。不需要装 git，安装器会退回到直接下载 zip。脚本会把插件链接进 profile 的 `node_modules`，并在 `cordis.patch.yml` 里登记 `ui-aqua`（幂等，重复跑不会重复登记）。刷新 Web 界面即可。
+
+指定版本或跟随开发分支：
+
+```powershell
+.\install.ps1 -Version 'v1.0.1'   # 指定某个发布版
+.\install.ps1 -Version 'main'     # 开发分支
+```
 
 ### macOS / Linux（手动，三步）
 
 ```sh
-git clone https://github.com/WYH66666666/DSH-Transparent-UI-Plugin.git
+git clone --depth 1 --branch v1.0.1 https://github.com/WYH66666666/DSH-Transparent-UI-Plugin.git
 ln -s "$PWD/DSH" "$DSH_HOME/profiles/node_modules/@deepseek-ai/dsh-client-ui-aqua"
 ```
 

@@ -21,12 +21,19 @@ Aqua is a highly customizable glassmorphism theme for the DeepSeek Harness web U
 powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'https://github.com/WYH66666666/DSH-Transparent-UI-Plugin/raw/main/install.ps1' -OutFile install.ps1; .\install.ps1"
 ```
 
-No git needed — the installer falls back to a plain zip download. It links the plugin into the profile's `node_modules` and registers `ui-aqua` in `cordis.patch.yml` (idempotent — safe to run again). Reload the web UI and it is on.
+Installs the **latest release** by default. No git needed — the installer falls back to a plain zip download. It links the plugin into the profile's `node_modules` and registers `ui-aqua` in `cordis.patch.yml` (idempotent — safe to run again). Reload the web UI and it is on.
+
+Pin a version or track the dev branch:
+
+```powershell
+.\install.ps1 -Version 'v1.0.1'   # a specific release
+.\install.ps1 -Version 'main'     # the development branch
+```
 
 ### macOS / Linux (manual, three steps)
 
 ```sh
-git clone https://github.com/WYH66666666/DSH-Transparent-UI-Plugin.git
+git clone --depth 1 --branch v1.0.1 https://github.com/WYH66666666/DSH-Transparent-UI-Plugin.git
 ln -s "$PWD/DSH" "$DSH_HOME/profiles/node_modules/@deepseek-ai/dsh-client-ui-aqua"
 ```
 
