@@ -105,19 +105,16 @@
 }
 
 /* Background brightness knob: below 50 fades the backdrop toward pure black,
-   above 50 toward pure white; exactly 50 keeps both overlays transparent. */
-[data-dsh-aqua] [data-dsh-aqua-ambient]::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, var(--dsh-aqua-brightness-black, 0));
-}
-
+   above 50 toward pure white; exactly 50 keeps both overlays transparent.
+   Both layers live in ::after (painted ABOVE the fluid canvas / wallpaper
+   children); ::before would sit behind them and be invisible. */
 [data-dsh-aqua] [data-dsh-aqua-ambient]::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, var(--dsh-aqua-brightness-white, 0));
+  background-image:
+    linear-gradient(rgba(255, 255, 255, var(--dsh-aqua-brightness-white, 0)), rgba(255, 255, 255, var(--dsh-aqua-brightness-white, 0))),
+    linear-gradient(rgba(0, 0, 0, var(--dsh-aqua-brightness-black, 0)), rgba(0, 0, 0, var(--dsh-aqua-brightness-black, 0)));
 }
 
 @media (prefers-reduced-motion: no-preference) {
