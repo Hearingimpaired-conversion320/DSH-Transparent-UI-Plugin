@@ -167,13 +167,15 @@ export function AquaPluginCard(props: AquaPluginCardComponentProps) {
       </div>
       <div className={css.modeHint}>{t('aqua.modeHint')}</div>
 
-      {mode === 'float' && (
-        <div className={css.controls}>
-          <Knob label={t('aqua.blur')} value={blur} min={0} max={40} step={0.5} unit="px" onChange={setBlur} />
-          <Knob label={t('aqua.frost')} value={frost} min={0} max={100} step={1} unit="%" onChange={setFrost} />
-          <Knob label={t('aqua.fluidHue')} value={fluidHue} min={0} max={360} step={1} unit="°" onChange={setFluidHue} />
-        </div>
-      )}
+      <div className={css.controls}>
+        {mode === 'float' && (
+          <>
+            <Knob label={t('aqua.blur')} value={blur} min={0} max={40} step={0.5} unit="px" onChange={setBlur} />
+            <Knob label={t('aqua.frost')} value={frost} min={0} max={100} step={1} unit="%" onChange={setFrost} />
+          </>
+        )}
+        <Knob label={t('aqua.fluidHue')} value={fluidHue} min={0} max={360} step={1} unit="°" onChange={setFluidHue} />
+      </div>
 
       <div className={css.backdropRow}>
         <span className={css.backdropLabel}>{t('aqua.background')}</span>
